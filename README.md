@@ -1,2 +1,2 @@
 # CPUShedulingSim
-A simulator to visualizes the scheduling timelines of tasks 
+The simulator will allow users to input task parameters and visualize the scheduling timeline, highlighting schedulability and missed deadlines.
