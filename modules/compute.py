@@ -32,17 +32,14 @@ def _FCFS(task_info:dict) -> np.ndarray:
     computed_results=[]
 
     for task in task_sorted:
-
         release = release_time[task]
+        #checking if current time is less than release time of task 
         if current_time<release:
             start_time=release
         else:
             start_time=current_time
-
         exec_time=wx_exec_time[task]
         computed_results.append([task,start_time,start_time+exec_time,1])
-        
-        #compare if release time of next task is equal to *end time of current task
         current_time=start_time+exec_time    
 
     computed_results=np.array(computed_results,dtype=float)
