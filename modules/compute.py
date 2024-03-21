@@ -14,24 +14,36 @@ def _FCFS(task_info:dict) -> np.ndarray:
         The dictionary should contain the following key strings and value types
         presented below:
 
-        {"arrival_time": np.array 1d,
+        {"release_time": np.array 1d,
          "wc_exec_time": np.array 1d}
 
+    
+    Return 
+    ----------
     computed_results: np.array
         A 2d numpy array containing the computed results.
 
     """
 
-    arrival_time=task_info['arrival_time']
+    release_time=task_info['release_time']
     wx_exec_time=task_info['wc_exec_time']
-    task_sorted=np.argsort(arrival_time)
+    task_sorted=np.argsort(release_time)
     current_time=0
     computed_results=[]
 
     for task in task_sorted:
+
+        release = release_time[task]
+        if current_time<release:
+            start_time=release
+        else:
+            start_time=current_time
+
         exec_time=wx_exec_time[task]
-        computed_results.append([task,current_time,current_time+exec_time,1])
-        current_time+=exec_time    
+        computed_results.append([task,start_time,start_time+exec_time,1])
+        
+        #compare if release time of next task is equal to *end time of current task
+        current_time=start_time+exec_time    
 
     computed_results=np.array(computed_results,dtype=float)
 
@@ -41,7 +53,32 @@ def _rate_monotonic(task_info:dict) -> np.ndarray:
     """
     Computes the scheduling base on the rate monotonic cpu scheduling algorithm
 
+    Parameters
+    ----------
+
+    task_info: dict 
+        A dictionary containing both the scheduling algorithm and task details
+
+        The dictionary should contain the following key strings and value types
+        presented below:
+
+        {"periods": np.array 1d,
+         "wc_exec_time": np.array 1d,
+         "end_time": float}
+
+    
+    Return 
+    ----------
+    computed_results: np.array
+        A 2d numpy array containing the computed results.
+
+    Note
+    ----
+    How to handle task with the same period?
+
+
     """
+
     computed_results=np.array([[]])
 
     return computed_results    
@@ -63,12 +100,13 @@ def cpu_scheduling_compute(task_info: dict) -> np.ndarray:
         The dictionary and with all the possible the key string and value type 
         is presented below:
 
-        {"sceduling_algo": str,
-         "periods": np.array 1d,
-         "arrival_time": np.array 1d,
-         "wc_exec_time": np.array 1d,
+        {"sceduling_algo": str, -> all
+         "periods": np.array 1d, -> RM
+         "wc_exec_time": np.array 1d, -> all
          "invoc_time": np.array 2d,
-         "frequency": np.array 1d}
+         "frequency": np.array 1d,
+         "release_time": np.array 1d, -> FCFS
+         "end_time": int ->RM }
     
     Return 
     --------
