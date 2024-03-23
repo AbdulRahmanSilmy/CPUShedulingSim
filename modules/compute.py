@@ -1,132 +1,149 @@
 #This module contains the 
 import numpy as np 
+from typing import Optional
 
-def _insert_task(task,ready_queue):
-    """
-    Helper function for _rate_monotonic. Inserts new task to 
-    the ready_queue. 
-    """
-    return np.concatenate([ready_queue,[task]])
+class RateMonotonic():
 
-def _get_task(ready_queue):
-    """
-    Helper function for _rate_monotonic. Gets the next task to be 
-    run from the ready_queue
-    """
-    if ready_queue.shape[0]>0:
-        ready_periods=ready_queue[:,1]
-        min_index=np.argmin(ready_periods)
-        task=ready_queue[min_index]
-        ready_queue=np.delete(ready_queue,min_index,axis=0)
-    else:
-        task=None
+    def __init__(self,periods,wc_exec_time,end_time):
+        self.periods=periods
+        self.exec_time=wc_exec_time
+        self.end_time=end_time 
+        #Initializing a ready queue each row corresponding to a task
+        #Each row containg the following elements:
+        #[task_num,task_period,task_remaining_execution_time]
+        self.ready_queue=np.array([[i,per,exec_t] for i,(per,exec_t) in enumerate(zip(periods,self.exec_time))])
 
-    return task,ready_queue
+    def _insert_task(self,task:np.ndarray):
+        """
+        Helper function for _rate_monotonic. Inserts new task to 
+        the ready_queue. 
+        """
+        self.ready_queue=np.concatenate([self.ready_queue,[task]])
 
-def _rate_monotonic(task_info:dict) -> np.ndarray:
-    """
-    Computes the scheduling base on the rate monotonic cpu scheduling algorithm
+    def _get_task(self) -> Optional[np.ndarray]:
+        """
+        Helper function for _rate_monotonic. Gets the next task to be 
+        run from the ready_queue
+        """
+        #checking if ready queue had tasks 
+        if self.ready_queue.shape[0]>0:
+            #extacting running task based on lowest period 
+            ready_periods=self.ready_queue[:,1]
+            min_index=np.argmin(ready_periods)
+            running_task=self.ready_queue[min_index]
 
-    Parameters
-    ----------
-
-    task_info: dict 
-        A dictionary containing both the scheduling algorithm and task details
-
-        The dictionary should contain the following key strings and value types
-        presented below:
-
-        {"periods": np.array 1d,
-         "wc_exec_time": np.array 1d,
-         "end_time": float}
-
-    
-    Return 
-    ----------
-    computed_results: np.array
-        A 2d numpy array containing the computed results.
-
-    Note
-    ----
-    How to handle task with the same period?
-
-
-    """
-    computed_results=[]
-    periods=task_info['periods']
-    exec_time=task_info['wc_exec_time']
-    end_time=task_info['end_time']
-    period_counter=np.ones(periods.shape,dtype=int)
-    
-    
-    
-    #initializing ready_queue 
-    ready_queue=np.array([[i,per,0,exec_t] for i,(per,exec_t) in enumerate(zip(periods,exec_time))])
-
-
-    current_time=0
-    while current_time<end_time:
-   
-        next_deadlines=periods*period_counter
-
-        task_details,ready_queue=_get_task(ready_queue)
-
-        if task_details is None:
-
-            immediate_task=np.argmin(next_deadlines)
-            immediate_deadline=next_deadlines[immediate_task]
-
-            ready_queue=_insert_task([immediate_task,
-                                periods[immediate_task],
-                                immediate_deadline,
-                                exec_time[immediate_task]],
-                                ready_queue)
-            current_time=immediate_deadline
-            period_counter[immediate_task]+=1
-            
-            
+            #deleting running task from ready queue 
+            self.ready_queue=np.delete(self.ready_queue,min_index,axis=0)
         else:
+            #returning None if ready queue is empty 
+            running_task=None
+
+        return running_task
+
+    def compute(self) -> np.ndarray:
+        """
+        Computes the scheduling base on the rate monotonic cpu scheduling algorithm
+
+        Parameters
+        ----------
+
+        task_info: dict 
+            A dictionary containing both the scheduling algorithm and task details
+
+            The dictionary should contain the following key strings and value types
+            presented below:
+
+            {"periods": np.array 1d,
+             "wc_exec_time": np.array 1d,
+             "task_end_time": float}
+
+
+        Return 
+        ----------
+        computed_results: np.array
+            A 2d numpy array containing the computed results.
+
+        Note
+        ----
+        How to handle task with the same period?
+
+
+        """
+        computed_results=[]
+        #setting up period counter to keep track of deadlines 
+        period_counter=np.ones(self.periods.shape,dtype=int)
+        
+
+        current_time=0
+        while current_time<self.end_time:
             
-            task_num=task_details[0]
-            period=task_details[1]
-            exec_t=task_details[3]
-            temp_time=current_time+exec_t
+            next_deadlines=self.periods*period_counter
+            #extracting running task from ready queue
+            running_task=self._get_task()
 
+            if running_task is None:
+                #finding nearest task if ready queue is empty 
+                nearest_task=np.argmin(next_deadlines)
+                nearest_deadline=next_deadlines[nearest_task]
 
-            if all(temp_time<next_deadlines):
-                temp_results=[task_num,current_time,temp_time,1]
-                current_time = temp_time
+                #inserting nearest task to ready queue
+                self._insert_task([nearest_task,
+                                   self.periods[nearest_task],
+                                   self.exec_time[nearest_task]])
+                
+                #jumping current time to nearest deadline 
+                current_time=nearest_deadline
+                #updating period counter of nearest task to reflect new deadline
+                period_counter[nearest_task]+=1
 
             else:
-                immediate_task=np.argmin(next_deadlines)
-                immediate_deadline=next_deadlines[immediate_task]
-                remain_exec=temp_time-immediate_deadline
+                #if running task is valid/ready queue is not empty 
+                #extracting details from running task
+                task_num=running_task[0]
+                period=running_task[1]
+                exec_t=running_task[2]
 
-                #inserting new task because of deadline 
-                ready_queue=_insert_task([immediate_task,
-                                    periods[immediate_task],
-                                    immediate_deadline,
-                                    exec_time[immediate_task]],
-                                    ready_queue)
-                
-                #inserting interrupted old task if exec time remains 
-                if remain_exec>0:
-                    ready_queue=_insert_task([task_num,
-                                              period,
-                                              immediate_deadline,
-                                              remain_exec],
-                                              ready_queue)
+                #end time is running task runs till completion 
+                task_end_time=current_time+exec_t
 
+                #checks is running task is interrupted by upcoming deadlines
+                if all(task_end_time<next_deadlines):
+                    #if not interrupted storing the execution of running task
+                    temp_results=[task_num,current_time,task_end_time,1]
+                    current_time = task_end_time
 
-                temp_results=[task_num,current_time,immediate_deadline,1]
-                current_time=immediate_deadline
+                else:
+                    #if task is interrupted 
+                    #finding immediate task 
+                    interrupting_task=np.argmin(next_deadlines)
+                    interrupting_release=next_deadlines[interrupting_task]
 
-                period_counter[immediate_task]+=1
-        
-      
-        computed_results.append(temp_results)
+                    #calculating remaining execution time of iterrupting running task
+                    running_remain_exec=task_end_time-interrupting_release
 
-    return np.array(computed_results)
+                    #inserting interrupting task into ready queue 
+                    self._insert_task([interrupting_task,
+                                       self.periods[interrupting_task],
+                                       self.exec_time[interrupting_task]])
+
+                    #inserting running task in ready queue if execution is not complete 
+                    if running_remain_exec>0:
+                        self._insert_task([task_num,
+                                           period,
+                                           running_remain_exec])
+                    
+                    #storing the execution of running task before interruption 
+                    temp_results=[task_num,current_time,interrupting_release,1]
+                    current_time=interrupting_release
+                    
+                    #incrementing counter to reflect new deadline
+                    period_counter[interrupting_task]+=1
+
+            
+            computed_results.append(temp_results)
+
+        return np.array(computed_results)
+
 
 def _FCFS(task_info:dict) -> np.ndarray:
     """
@@ -174,7 +191,7 @@ def _FCFS(task_info:dict) -> np.ndarray:
     return computed_results
 
 
-ALGO_MAPPING={'rate_monotonic':_rate_monotonic,
+ALGO_MAPPING={'rate_monotonic':RateMonotonic,
               'first_come_first_serve':_FCFS}
 
 def cpu_scheduling_compute(task_info: dict) -> np.ndarray:
@@ -197,7 +214,7 @@ def cpu_scheduling_compute(task_info: dict) -> np.ndarray:
          "invoc_time": np.array 2d,
          "frequency": np.array 1d,
          "release_time": np.array 1d, -> FCFS
-         "end_time": int ->RM }
+         "task_end_time": int ->RM }
     
     Return 
     --------
@@ -207,18 +224,19 @@ def cpu_scheduling_compute(task_info: dict) -> np.ndarray:
 
         Task_num -> string denoting the task number
         start_time -> float 
-        end_time -> float
+        task_end_time -> float
         frequency -> float 
 
         An example output is presented below:
-        [[Task_num,start_time,end_time,frequency],
-         [Task_num,start_time,end_time,frequency],
+        [[Task_num,start_time,task_end_time,frequency],
+         [Task_num,start_time,task_end_time,frequency],
          ...]
         
     """
 
     algo=task_info['scheduling_algo']
-
-    computed_results=ALGO_MAPPING[algo](task_info)
+    del task_info['scheduling_algo']
+    cpu_scheduler=ALGO_MAPPING[algo](**task_info)
+    computed_results=cpu_scheduler.compute()
 
     return computed_results
