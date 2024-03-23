@@ -3,27 +3,71 @@ import numpy as np
 from typing import Optional
 
 class RateMonotonic():
+    """
+    Computes the cpu scheduling with the rate monotonic algorithm
 
-    def __init__(self,periods,wc_exec_time,end_time):
+    Parameters
+    ----------
+    periods: np.ndarray
+        A 1d array of shape (num_task,) that contains periods for each task
+
+    wc_exec_time: np.ndarray
+        A 1d array of shape (num_task,) that contains worst case execution 
+        time for each task
+
+    end_time: float
+        Denoting when the simulation should end.
+
+    Attributes
+    ----------
+    ready_queue
+        A 2d array of shape (N,3), where N represents the number of tasks in 
+        the ready queue and it is dynamic. Each of the three columns represent
+        the task_number, task_period and task_remaining_execution_time in that 
+        order
+
+    ToDo
+    --------
+    -Need to identify the deadlines and return with dictionary [extra feature]
+    -Need to identify stop running of tasks by setting end time as a new period [bug]
+    """
+
+    def __init__(self,
+                 periods: np.ndarray, 
+                 wc_exec_time: np.ndarray, 
+                 end_time: float):
         self.periods=periods
-        self.exec_time=wc_exec_time
+        self.wc_exec_time=wc_exec_time
         self.end_time=end_time 
-        #Initializing a ready queue each row corresponding to a task
-        #Each row containg the following elements:
-        #[task_num,task_period,task_remaining_execution_time]
-        self.ready_queue=np.array([[i,per,exec_t] for i,(per,exec_t) in enumerate(zip(periods,self.exec_time))])
+        #Initializing a ready queue with all tasks starting at time 0
+        self.ready_queue=np.array([[i,per,exec_t] for i,(per,exec_t) in enumerate(zip(periods,self.wc_exec_time))])
 
     def _insert_task(self,task:np.ndarray):
         """
-        Helper function for _rate_monotonic. Inserts new task to 
-        the ready_queue. 
+        Inserts new task to the ready_queue.
+
+        Parameters
+        -----------
+        task: np.ndarray
+            A 1d array of shape (3,) that contains task_number, task_period 
+            and task_remaining_execution_time in that order.
+          
         """
         self.ready_queue=np.concatenate([self.ready_queue,[task]])
 
     def _get_task(self) -> Optional[np.ndarray]:
         """
-        Helper function for _rate_monotonic. Gets the next task to be 
-        run from the ready_queue
+        Extracts the running task from the ready queue. Deletes running task 
+        from the ready queue. Running task is chosen based on lowest period 
+        of the task. If ready queue is empty return None
+
+        Returns
+        -------
+        running_task: np.ndarray or None 
+            A 1d array of shape (3,) that contains task_number, task_period 
+            and task_remaining_execution_time in that order. If ready queue 
+            is empty returns None. 
+
         """
         #checking if ready queue had tasks 
         if self.ready_queue.shape[0]>0:
@@ -44,29 +88,13 @@ class RateMonotonic():
         """
         Computes the scheduling base on the rate monotonic cpu scheduling algorithm
 
-        Parameters
-        ----------
-
-        task_info: dict 
-            A dictionary containing both the scheduling algorithm and task details
-
-            The dictionary should contain the following key strings and value types
-            presented below:
-
-            {"periods": np.array 1d,
-             "wc_exec_time": np.array 1d,
-             "task_end_time": float}
-
-
         Return 
         ----------
         computed_results: np.array
-            A 2d numpy array containing the computed results.
-
-        Note
-        ----
-        How to handle task with the same period?
-
+            A 2d array of shape (N,4) where N denotes the number of task that have 
+            been run. This is determined based on self.end_time. Each column represents
+            the task_num, start_time, end_time and frequency in that order. Note the 
+            frequency here is always one.
 
         """
         computed_results=[]
@@ -89,7 +117,7 @@ class RateMonotonic():
                 #inserting nearest task to ready queue
                 self._insert_task([nearest_task,
                                    self.periods[nearest_task],
-                                   self.exec_time[nearest_task]])
+                                   self.wc_exec_time[nearest_task]])
                 
                 #jumping current time to nearest deadline 
                 current_time=nearest_deadline
@@ -124,7 +152,7 @@ class RateMonotonic():
                     #inserting interrupting task into ready queue 
                     self._insert_task([interrupting_task,
                                        self.periods[interrupting_task],
-                                       self.exec_time[interrupting_task]])
+                                       self.wc_exec_time[interrupting_task]])
 
                     #inserting running task in ready queue if execution is not complete 
                     if running_remain_exec>0:
@@ -144,55 +172,69 @@ class RateMonotonic():
 
         return np.array(computed_results)
 
-
-def _FCFS(task_info:dict) -> np.ndarray:
+class FCFS():
     """
-    Computes the scheduling base on the first come first serve
-    
+    Computes the cpu scheduling with the first come first serve algorithm 
+
     Parameters
     ----------
+    release_time: np.ndarray
+        A 1d array of shape (num_task,) that contains release for each task
 
-    task_info: dict 
-        A dictionary containing both the scheduling algorithm and task details
-
-        The dictionary should contain the following key strings and value types
-        presented below:
-
-        {"release_time": np.array 1d,
-         "wc_exec_time": np.array 1d}
-
+    wc_exec_time: np.ndarray
+        A 1d array of shape (num_task,) that contains worst case execution 
+        time for each task
     
-    Return 
-    ----------
-    computed_results: np.array
-        A 2d numpy array containing the computed results.
+    ToDo
+    --------
+    -Need to identify the deadlines and return with dictionary [extra feature]
 
     """
 
-    release_time=task_info['release_time']
-    wx_exec_time=task_info['wc_exec_time']
-    task_sorted=np.argsort(release_time)
-    current_time=0
-    computed_results=[]
+    def __init__(self,release_time: np.ndarray, wc_exec_time: np.ndarray):
+        self.release_time=release_time
+        self.wc_exec_time=wc_exec_time
 
-    for task in task_sorted:
-        release = release_time[task]
-        #checking if current time is less than release time of task 
-        if current_time<release:
-            start_time=release
-        else:
-            start_time=current_time
-        exec_time=wx_exec_time[task]
-        computed_results.append([task,start_time,start_time+exec_time,1])
-        current_time=start_time+exec_time    
+    def compute(self):
+        """
+        Computes the scheduling base on the first come first serve algo scheduling algorithm
 
-    computed_results=np.array(computed_results,dtype=float)
+        Return 
+        ----------
+        computed_results: np.array
+            A 2d array of shape (num_task,4). Each column represents the task_num, start_time, 
+            end_time and frequency in that order. Note the frequency here is always one.
 
-    return computed_results
+        """
+        #sorting tasks based on release time 
+        task_sorted=np.argsort(self.release_time)
+        current_time=0
+        computed_results=[]
+
+        for task in task_sorted:
+            release = self.release_time[task]
+            #checking if current time is less than release time of task 
+            if current_time<release:
+                start_time=release
+            else:
+                start_time=current_time
+            wc_exec_time=self.wc_exec_time[task]
+
+            #storing task execution within computed results
+            computed_results.append([task,start_time,start_time+wc_exec_time,1])
+
+            #updating current tiem 
+            current_time=start_time+wc_exec_time    
+
+        computed_results=np.array(computed_results,dtype=float)
+
+        return computed_results
+
+
 
 
 ALGO_MAPPING={'rate_monotonic':RateMonotonic,
-              'first_come_first_serve':_FCFS}
+              'first_come_first_serve':FCFS}
 
 def cpu_scheduling_compute(task_info: dict) -> np.ndarray:
     """
