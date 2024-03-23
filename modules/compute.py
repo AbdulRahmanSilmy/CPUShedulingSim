@@ -100,7 +100,6 @@ class RateMonotonic():
         computed_results=[]
         #setting up period counter to keep track of deadlines 
         period_counter=np.ones(self.periods.shape,dtype=int)
-        
 
         current_time=0
         while current_time<self.end_time:
@@ -231,8 +230,6 @@ class FCFS():
         return computed_results
 
 
-
-
 ALGO_MAPPING={'rate_monotonic':RateMonotonic,
               'first_come_first_serve':FCFS}
 
@@ -243,7 +240,6 @@ def cpu_scheduling_compute(task_info: dict) -> np.ndarray:
 
     Parameters
     ----------
-
     task_info: dict 
         A dictionary containing both the scheduling algorithm and task details
 
@@ -251,23 +247,20 @@ def cpu_scheduling_compute(task_info: dict) -> np.ndarray:
         is presented below:
 
         {"sceduling_algo": str, -> all
-         "periods": np.array 1d, -> RM
          "wc_exec_time": np.array 1d, -> all
-         "invoc_time": np.array 2d,
-         "frequency": np.array 1d,
          "release_time": np.array 1d, -> FCFS
-         "task_end_time": int ->RM }
+         "periods": np.array 1d, -> RM
+         "end_time": int -> RM
+         "invoc_time": np.array 2d -> Cycle EDF,
+         "frequency": np.array 1d -> Cycle EDF,
+          }
     
     Return 
     --------
     computed_results: np.array
-        A 2d numpy array containing the computed results. Each lower dimension 
-        contains the following 4 items and their associated type:
-
-        Task_num -> string denoting the task number
-        start_time -> float 
-        task_end_time -> float
-        frequency -> float 
+        A 2d array of shape (N,4), where N denotes the number of task invocations. 
+        Each of the 4 columns represent the task_num, start_time, end_time and 
+        frequency in that order. 
 
         An example output is presented below:
         [[Task_num,start_time,task_end_time,frequency],
@@ -275,10 +268,13 @@ def cpu_scheduling_compute(task_info: dict) -> np.ndarray:
          ...]
         
     """
-
+    #extracting string for cpu scheduling algorithm 
     algo=task_info['scheduling_algo']
+    #deleting cpu scheduling algorithm to pass task info dictionary as **kwargs
     del task_info['scheduling_algo']
+    #initializing the class associated with the chosen cpu scheduling algorithm 
     cpu_scheduler=ALGO_MAPPING[algo](**task_info)
+    #computing results of cpu scheduling algorithm
     computed_results=cpu_scheduler.compute()
 
     return computed_results
