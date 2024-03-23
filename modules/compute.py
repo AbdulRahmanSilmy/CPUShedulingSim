@@ -111,7 +111,7 @@ class RateMonotonic():
             if running_task is None:
                 #finding nearest task if ready queue is empty 
                 nearest_task=np.argmin(next_deadlines)
-                nearest_deadline=next_deadlines[nearest_task]
+                nearest_release=next_deadlines[nearest_task]
 
                 #inserting nearest task to ready queue
                 self._insert_task([nearest_task,
@@ -119,7 +119,7 @@ class RateMonotonic():
                                    self.wc_exec_time[nearest_task]])
                 
                 #jumping current time to nearest deadline 
-                current_time=nearest_deadline
+                current_time=nearest_release
                 #updating period counter of nearest task to reflect new deadline
                 period_counter[nearest_task]+=1
 
@@ -163,7 +163,7 @@ class RateMonotonic():
                     temp_results=[task_num,current_time,interrupting_release,1]
                     current_time=interrupting_release
                     
-                    #incrementing counter to reflect new deadline
+                    #incrementing counter to reflect new deadline of interrupting task
                     period_counter[interrupting_task]+=1
 
             
@@ -249,10 +249,10 @@ def cpu_scheduling_compute(task_info: dict) -> np.ndarray:
         {"sceduling_algo": str, -> all
          "wc_exec_time": np.array 1d, -> all
          "release_time": np.array 1d, -> FCFS
-         "periods": np.array 1d, -> RM
-         "end_time": int -> RM
-         "invoc_time": np.array 2d -> Cycle EDF,
-         "frequency": np.array 1d -> Cycle EDF,
+         "end_time": int, -> RM
+         "periods": np.array 1d, -> RM and CycleEDF
+         "invoc_time": np.array 2d, -> CycleEDF
+         "frequency": np.array 1d, -> CycleEDF
           }
     
     Return 
