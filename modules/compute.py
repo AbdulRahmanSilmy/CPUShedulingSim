@@ -97,6 +97,7 @@ class RateMonotonic():
             frequency here is always one.
 
         """
+        dict_info={}
         computed_results=[]
         #setting up period counter to keep track of deadlines 
         period_counter=np.ones(self.periods.shape,dtype=int)
@@ -130,7 +131,7 @@ class RateMonotonic():
                 period=running_task[1]
                 exec_t=running_task[2]
 
-                #end time is running task runs till completion 
+                #end time if running task runs till completion 
                 task_end_time=current_time+exec_t
 
                 #checks is running task is interrupted by upcoming deadlines
@@ -158,7 +159,8 @@ class RateMonotonic():
                         self._insert_task([task_num,
                                            period,
                                            running_remain_exec])
-                    
+                        
+                    #dict_info=self._check_missed_deadline()
                     #storing the execution of running task before interruption 
                     temp_results=[task_num,current_time,interrupting_release,1]
                     current_time=interrupting_release
@@ -169,7 +171,7 @@ class RateMonotonic():
             
             computed_results.append(temp_results)
 
-        return np.array(computed_results)
+        return np.array(computed_results),dict_info
 
 class FCFS():
     """
@@ -205,6 +207,7 @@ class FCFS():
             end_time and frequency in that order. Note the frequency here is always one.
 
         """
+        dict_info={}
         #sorting tasks based on release time 
         task_sorted=np.argsort(self.release_time)
         current_time=0
@@ -227,7 +230,7 @@ class FCFS():
 
         computed_results=np.array(computed_results,dtype=float)
 
-        return computed_results
+        return computed_results,dict_info
 
 
 ALGO_MAPPING={'rate_monotonic':RateMonotonic,
@@ -275,6 +278,6 @@ def cpu_scheduling_compute(task_info: dict) -> np.ndarray:
     #initializing the class associated with the chosen cpu scheduling algorithm 
     cpu_scheduler=ALGO_MAPPING[algo](**task_info)
     #computing results of cpu scheduling algorithm
-    computed_results=cpu_scheduler.compute()
+    computed_results,dict_info=cpu_scheduler.compute()
 
-    return computed_results
+    return computed_results,dict_info
