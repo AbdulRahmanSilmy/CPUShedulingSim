@@ -224,7 +224,13 @@ class EDF():
         A 2d array of shape (N,3), where N represents the number of tasks in 
         the ready queue and it is dynamic. Each of the three columns represent
         the task_number, task_deadline and task_remaining_execution_time in that 
-        order
+        order.
+
+    computed_results: np.array
+        A 2d array of shape (N,4) where N denotes the number of task that have 
+        been run. Each column represents the task_num, start_time, end_time and 
+        frequency in that order. Note the frequency here is always one. Initially
+        size of this array is zero.     
 
     ToDo
     --------
@@ -428,11 +434,16 @@ class RateMonotonic():
 
     Attributes
     ----------
-    ready_queue
+    ready_queue: np.ndarray 
         A 2d array of shape (N,3), where N represents the number of tasks in 
         the ready queue and it is dynamic. Each of the three columns represent
         the task_number, task_period and task_remaining_execution_time in that 
         order
+    computed_results: np.array
+        A 2d array of shape (N,4) where N denotes the number of task that have 
+        been run. Each column represents the task_num, start_time, end_time and 
+        frequency in that order. Note the frequency here is always one. Initially
+        size of this array is zero. 
 
     ToDo
     --------
@@ -449,6 +460,7 @@ class RateMonotonic():
         self.end_time=end_time 
         #Initializing a ready queue with all tasks starting at time 0
         self.ready_queue=np.array([[i,per,exec_t] for i,(per,exec_t) in enumerate(zip(periods,self.wc_exec_time))])
+        self.computed_results=np.array([[]])
 
     def _insert_task(self,task:np.ndarray):
         """
@@ -491,6 +503,36 @@ class RateMonotonic():
             running_task=None
 
         return running_task
+    
+    def _insert_computed_results(self,new_results):
+        """
+        Inserting new results into computed results. If new results task and 
+        the most recent task in computed_results are contiguous in time they 
+        are merged together. 
+
+        Parameters
+        ----------
+        new_results: list
+            A list of of shape (4,) containing the task number, start time,
+            end time and frequency in that order
+        """
+
+        #check if computed results is empty 
+        if self.computed_results.size>0:
+            #if not empty extracts the most recent row in the 
+            #computed results 2d array 
+            recent_result=self.computed_results[-1]
+            #checks if new results and recent result contain contiguous blocks of the 
+            #same tasks
+            if recent_result[0]==new_results[0] and recent_result[2]==new_results[1]:
+                #merging contiguous blocks of the same task
+                recent_result[2]=new_results[2]
+         
+            else:
+                self.computed_results=np.concatenate([self.computed_results,
+                                                     [new_results]])
+        else:
+            self.computed_results=np.array([new_results])
 
     def compute(self) -> np.ndarray:
         """
@@ -506,7 +548,6 @@ class RateMonotonic():
 
         """
         dict_info={}
-        computed_results=[]
         #setting up period counter to keep track of deadlines 
         period_counter=np.ones(self.periods.shape,dtype=int)
 
@@ -546,7 +587,7 @@ class RateMonotonic():
                 if all(task_end_time<next_deadlines):
                     #if not interrupted storing the execution of running task
                     temp_results=[task_num,current_time,task_end_time,1]
-                    computed_results.append(temp_results)
+                    self._insert_computed_results(temp_results)
                     current_time = task_end_time
 
                 else:
@@ -573,16 +614,16 @@ class RateMonotonic():
                     #storing the execution of running task before interruption 
                     if current_time!=interrupting_release:
                         temp_results=[task_num,current_time,interrupting_release,1]
-                        computed_results.append(temp_results)
+                        self._insert_computed_results(temp_results)
                     current_time=interrupting_release
                     
                     #incrementing counter to reflect new deadline of interrupting task
                     period_counter[interrupting_task]+=1
 
             
-                #computed_results.append(temp_results)
+                
 
-        return np.array(computed_results),dict_info
+        return self.computed_results,dict_info
 
 class FCFS():
     """
