@@ -87,6 +87,21 @@ class CycleEDF():
 
         return running_task
     
+    def _compute_frequency(self, running_task):
+        task_num = running_task[0]
+
+        def sum_other_tasks(other_tasks):
+            sum = 0
+            for task in other_tasks:
+                task_num = task[0]
+                freq = self.bc_exec_time[task_num]/self.periods[task_num]
+                sum += freq
+            return sum
+
+        other_tasks = np.delete(self.ready_queue.copy(),task_num,0)
+        freq= self.wc_exec_time[task_num]/self.periods[task_num] + sum_other_tasks(other_tasks)
+        # self.bc_exec_time[task_num] = self.
+        return freq
 
     def compute(self) -> np.ndarray:
         """
