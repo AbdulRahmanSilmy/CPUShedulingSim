@@ -38,12 +38,21 @@ class CycleEDF():
                  invocations: np.ndarray):
         self.periods=periods
         self.wc_exec_time=wc_exec_time
-        self.bc_exec_time=wc_exec_time
-        #invocatios is a 2d numpy array each row representing 
+        self.bc_exec_time=wc_exec_time.copy()
+        #invocations is a 2d numpy array each row representing 
         #the execuation of tasks in that order
         self.invocations=invocations
+        self.invocations_counter=np.zeros(self.invocations.shape(0))
         #Initializing a ready queue with all tasks starting at time 0
-        self.ready_queue=np.array([[i,per,inv_exec_t] for i,(per,inv_exec_t) in enumerate(zip(periods,self.invocations[0,:]))])
+        temp = zip(self.periods,self.wc_exec_time, *invocations)
+        for j,i in enumerate(temp):
+            temp = np.array([i])
+            temp = np.append(j,temp)
+            temp = np.array([temp])
+            if j == 0:
+                ready_queue = np.array([np.zeros(temp.shape[1])])
+            ready_queue = np.concatenate((ready_queue,temp))
+        ready_queue=np.delete(ready_queue,0,0)
 
     def _insert_task(self,task:np.ndarray):
         """
@@ -88,7 +97,7 @@ class CycleEDF():
         return running_task
     
     def _compute_frequency(self, running_task):
-        task_num = running_task[0]
+        task_num=running_task[0]
 
         def sum_other_tasks(other_tasks):
             sum = 0
@@ -100,8 +109,13 @@ class CycleEDF():
 
         other_tasks = np.delete(self.ready_queue.copy(),task_num,0)
         freq= self.wc_exec_time[task_num]/self.periods[task_num] + sum_other_tasks(other_tasks)
-        # self.bc_exec_time[task_num] = self.
-        return freq
+        #update bc
+        self.bc_exec_time[task_num] = self.invocations[self.invocations_counter[task_num],task_num]
+        self.invocations_counter[task_num] += 1
+        #computing exec_t
+        if self.invocations_counter[task_num] <= self.invocations.shape(0)-1:
+            exec_t = self.bc_exec_time[task_num]/freq
+        return freq, exec_t
 
     def compute(self) -> np.ndarray:
         """
@@ -154,8 +168,7 @@ class CycleEDF():
                 deadline=running_task[1]
                 inv_exec_t=running_task[2]
 
-                frequency=self._compute_frequency(inv_exec_t,task_num)
-                exec_t=self._compute_exec_t(frequency,inv_exec_t)
+                frequency,exec_t=self._compute_frequency(running_task)
 
                 #end time if running task runs till completion 
                 task_end_time=current_time+exec_t
