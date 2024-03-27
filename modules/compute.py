@@ -546,6 +546,7 @@ class RateMonotonic():
                 if all(task_end_time<next_deadlines):
                     #if not interrupted storing the execution of running task
                     temp_results=[task_num,current_time,task_end_time,1]
+                    computed_results.append(temp_results)
                     current_time = task_end_time
 
                 else:
@@ -570,14 +571,16 @@ class RateMonotonic():
                         
                     #dict_info=self._check_missed_deadline()
                     #storing the execution of running task before interruption 
-                    temp_results=[task_num,current_time,interrupting_release,1]
+                    if current_time!=interrupting_release:
+                        temp_results=[task_num,current_time,interrupting_release,1]
+                        computed_results.append(temp_results)
                     current_time=interrupting_release
                     
                     #incrementing counter to reflect new deadline of interrupting task
                     period_counter[interrupting_task]+=1
 
             
-                computed_results.append(temp_results)
+                #computed_results.append(temp_results)
 
         return np.array(computed_results),dict_info
 
