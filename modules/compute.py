@@ -242,6 +242,7 @@ class EDF():
        
         #Initializing a ready queue with all tasks starting at time 0
         self.ready_queue=np.array([[i,per,exec_t] for i,(per,exec_t) in enumerate(zip(periods,self.wc_exec_time))])
+        self.computed_results=np.array([[]])
 
     def _insert_task(self,task:np.ndarray):
         """
@@ -271,7 +272,7 @@ class EDF():
 
         """
         #checking if ready queue had tasks 
-        if self.ready_queue.shape[0]>0:
+        if self.ready_queue.size>0:
             #extacting running task based on lowest period 
             ready_deadline=self.ready_queue[:,1]
             min_index=np.argmin(ready_deadline)
@@ -284,6 +285,46 @@ class EDF():
             running_task=None
 
         return running_task
+    
+    def _insert_computed_results(self,new_results):
+        """
+        Inserting new results into computed results. If new results task and 
+        the most recent task in computed_results are contiguous in time they 
+        are merged together. 
+
+        Parameters
+        ----------
+        new_results: list
+            A list of of shape (4,) containing the task number, start time,
+            end time and frequency in that order
+        """
+
+        #check if computed results is empty 
+        if self.computed_results.size>0:
+            #if not empty extracts the most recent row in the 
+            #computed results 2d array 
+            recent_result=self.computed_results[-1]
+            #checking if the most recent task in computed results
+            #match the task in temp_results
+            if recent_result[0]==new_results[0]:
+                #check if task are contiguous in time
+                if recent_result[2]==new_results[1]:
+                    #if contiguous in time just altering end time of the 
+                    #of the recent row in computed results 
+                    recent_result[2]=new_results[2]
+                else:
+                    self.computed_results=np.concatenate([self.computed_results,
+                                                     [new_results]])
+
+            else:
+                #if they are different task adding to
+                self.computed_results=np.concatenate([self.computed_results,
+                                                     [new_results]])
+            
+        else:
+            self.computed_results=np.array([new_results])
+            
+
 
 
     def compute(self) -> np.ndarray:
@@ -301,7 +342,7 @@ class EDF():
 
         """
         dict_info={}
-        computed_results=[]
+        #computed_results=[]
         #setting up period counter to keep track of deadlines 
         period_counter=np.ones(self.periods.shape,dtype=int)
 
@@ -376,9 +417,10 @@ class EDF():
                     temp_results=[task_num,current_time,interrupting_release,1]
                     current_time=interrupting_release
                     
-                computed_results.append(temp_results)
+                self._insert_computed_results(temp_results)
+                #computed_results.append(temp_results)
 
-        return np.array(computed_results),dict_info
+        return np.array(self.computed_results),dict_info
 
 class RateMonotonic():
     """
