@@ -381,6 +381,7 @@ class EDF():
                 if all(task_end_time<next_deadlines):
                     #if not interrupted storing the execution of running task
                     temp_results=[task_num,current_time,task_end_time,1]
+                    self._insert_computed_results(temp_results)
                     current_time = task_end_time
 
                 else:
@@ -409,10 +410,11 @@ class EDF():
                         
                     #dict_info=self._check_missed_deadline()
                     #storing the execution of running task before interruption 
-                    temp_results=[task_num,current_time,interrupting_release,1]
+                    if current_time!=interrupting_release:
+                        temp_results=[task_num,current_time,interrupting_release,1]
+                        self._insert_computed_results(temp_results)
                     current_time=interrupting_release
                     
-                self._insert_computed_results(temp_results)
 
         return self.computed_results,dict_info
 
@@ -619,9 +621,6 @@ class RateMonotonic():
                     
                     #incrementing counter to reflect new deadline of interrupting task
                     period_counter[interrupting_task]+=1
-
-            
-                
 
         return self.computed_results,dict_info
 
