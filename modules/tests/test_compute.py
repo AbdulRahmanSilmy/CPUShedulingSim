@@ -46,7 +46,31 @@ def test_FCFS(task_info,expected_results):
                                       [ 0, 75, 80,  1],
                                       [ 1, 80, 83,  1],
                                       [ 2, 83, 93,  1],
-                                      [ 3, 93, 99,  1]]))])
+                                      [ 3, 93, 99,  1]])),
+                          #check if it merges contiguous blocks from the same task
+                          ({"periods": np.array([8,15,20,22]), 
+                            "wc_exec_time": np.array([1,3,4,6]),
+                            "end_time": 55}, 
+                            np.array([[ 0,  0,  1,  1],
+                                      [ 1,  1,  4,  1],
+                                      [ 2,  4,  8,  1],
+                                      [ 0,  8,  9,  1],
+                                      [ 3,  9, 15,  1],
+                                      [ 1, 15, 16,  1],
+                                      [ 0, 16, 17,  1],
+                                      [ 1, 17, 19,  1],
+                                      [ 2, 20, 24,  1],
+                                      [ 0, 24, 25,  1],
+                                      [ 3, 25, 30,  1],
+                                      [ 1, 30, 32,  1],
+                                      [ 0, 32, 33,  1],
+                                      [ 1, 33, 34,  1],
+                                      [ 3, 34, 35,  1],
+                                      [ 0, 40, 41,  1],
+                                      [ 2, 41, 45,  1],
+                                      [ 1, 45, 48,  1],
+                                      [ 0, 48, 49,  1],
+                                      [ 3, 49, 55,  1]]))])
 def test_RM(task_info,expected_results):
     task_info["scheduling_algo"]='rate_monotonic'
     results,dict_info=cpu_scheduling_compute(task_info)
