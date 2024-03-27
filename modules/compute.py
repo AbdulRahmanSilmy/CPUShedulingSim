@@ -304,28 +304,18 @@ class EDF():
             #if not empty extracts the most recent row in the 
             #computed results 2d array 
             recent_result=self.computed_results[-1]
-            #checking if the most recent task in computed results
-            #match the task in temp_results
-            if recent_result[0]==new_results[0]:
-                #check if task are contiguous in time
-                if recent_result[2]==new_results[1]:
-                    #if contiguous in time just altering end time of the 
-                    #of the recent row in computed results 
-                    recent_result[2]=new_results[2]
-                else:
-                    self.computed_results=np.concatenate([self.computed_results,
-                                                     [new_results]])
-
+            #checks if new results and recent result contain contiguous blocks of the 
+            #same tasks
+            if recent_result[0]==new_results[0] and recent_result[2]==new_results[1]:
+                #merging contiguous blocks of the same task
+                recent_result[2]=new_results[2]
+         
             else:
-                #if they are different task adding to
                 self.computed_results=np.concatenate([self.computed_results,
                                                      [new_results]])
-            
         else:
             self.computed_results=np.array([new_results])
             
-
-
 
     def compute(self) -> np.ndarray:
         """
@@ -342,7 +332,6 @@ class EDF():
 
         """
         dict_info={}
-        #computed_results=[]
         #setting up period counter to keep track of deadlines 
         period_counter=np.ones(self.periods.shape,dtype=int)
 
@@ -418,9 +407,8 @@ class EDF():
                     current_time=interrupting_release
                     
                 self._insert_computed_results(temp_results)
-                #computed_results.append(temp_results)
 
-        return np.array(self.computed_results),dict_info
+        return self.computed_results,dict_info
 
 class RateMonotonic():
     """
