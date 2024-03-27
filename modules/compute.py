@@ -355,7 +355,7 @@ class RateMonotonic():
                     period_counter[interrupting_task]+=1
 
             
-            computed_results.append(temp_results)
+                computed_results.append(temp_results)
 
         return np.array(computed_results),dict_info
 
