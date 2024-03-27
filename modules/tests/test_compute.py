@@ -53,3 +53,25 @@ def test_RM(task_info,expected_results):
     results,dict_info=cpu_scheduling_compute(task_info)
 
     assert np.array_equal(results,expected_results), "computed results don't match expected results" 
+
+
+@pytest.mark.parametrize("task_info, expected_results",
+                         [({'periods':np.array([50,40,30]),
+                            'wc_exec_time':np.array([12,10,10]),
+                            'end_time':120}, 
+                            np.array([[  2,   0,  10,   1],
+                                      [  1,  10,  20,   1],
+                                      [  0,  20,  32,   1],
+                                      [  2,  32,  42,   1],
+                                      [  1,  42,  52,   1],
+                                      [  0,  52,  60,   1],
+                                      [  2,  60,  70,   1],
+                                      [  0,  70,  74,   1],
+                                      [  1,  80,  90,   1],
+                                      [  2,  90, 100,   1],
+                                      [  0, 100, 112,   1]]))])
+def test_EDF(task_info,expected_results):
+    task_info["scheduling_algo"]='earliest_deadline_first'
+    results,dict_info=cpu_scheduling_compute(task_info)
+
+    assert np.array_equal(results,expected_results), "computed results don't match expected results" 
