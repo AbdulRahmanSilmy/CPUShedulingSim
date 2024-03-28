@@ -1,7 +1,223 @@
 #This module contains the 
 import numpy as np 
 from typing import Optional
+from abc import ABC, abstractmethod
 
+class CPUScheduler(ABC):
+    def __init__(self,wc_exec_time,periods,invocations=None,end_time=None):
+        self.wc_exec_time=wc_exec_time
+        self.periods=periods
+        if invocations is None:
+            self.invocations=None
+            self.num_invocations=np.inf
+            self.end_time=end_time
+        else:
+            self.invocations=np.array(invocations)
+            self.num_invocations=self.invocations.shape[0]
+            self.end_time=np.inf
+        
+        self._initialize_ready_queue()
+        self.computed_results=np.array([[]])
+
+    @abstractmethod
+    def _compute_frequency(self,inv_exec_t,task_num):
+        pass
+
+    @abstractmethod
+    def _insert_nearest_task(self,nearest_task):
+        pass
+
+    @abstractmethod
+    def _insert_interrupted_task(self,interrupting_task):
+        pass
+    
+    @abstractmethod
+    def _initialize_ready_queue(self):
+        pass
+
+    def _get_task(self) -> Optional[np.ndarray]:
+        """
+        Extracts the running task from the ready queue. Deletes running task 
+        from the ready queue. Running task is chosen based on nearest deadline 
+        of the tasks. If ready queue is empty returns None
+
+        Returns
+        -------
+        running_task: np.ndarray or None 
+            A 1d array of shape (3,) that contains task_number, task_deadline 
+            and task_remaining_execution_time in that order. If ready queue 
+            is empty returns None. 
+
+        """
+        #checking if ready queue had tasks 
+        if self.ready_queue.size>0:
+            #extacting running task based on lowest period 
+            ready_priority=self.ready_queue[:,1]
+            min_index=np.argmin(ready_priority)
+            running_task=self.ready_queue[min_index]
+
+            #deleting running task from ready queue 
+            self.ready_queue=np.delete(self.ready_queue,min_index,axis=0)
+        else:
+            #returning None if ready queue is empty 
+            running_task=None
+
+        return running_task
+
+    def _insert_task(self,task:np.ndarray):
+        """
+        Inserts new task to the ready_queue.
+
+        Parameters
+        -----------
+        task: np.ndarray
+            A 1d array of shape (3,) that contains task_number, task_deadline 
+            and task_remaining_execution_time in that order.
+          
+        """
+        self.ready_queue=np.concatenate([self.ready_queue,[task]])
+
+    def _insert_task(self,task:np.ndarray):
+        """
+        Inserts new task to the ready_queue.
+
+        Parameters
+        -----------
+        task: np.ndarray
+            A 1d array of shape (3,) that contains task_number, task_deadline 
+            and task_remaining_execution_time in that order.
+          
+        """
+        self.ready_queue=np.concatenate([self.ready_queue,[task]])
+
+    def _insert_computed_results(self,new_results):
+        """
+        Inserting new results into computed results. If new results task and 
+        the most recent task in computed_results are contiguous in time they 
+        are merged together. 
+
+        Parameters
+        ----------
+        new_results: list
+            A list of of shape (4,) containing the task number, start time,
+            end time and frequency in that order
+        """
+
+        #check if computed results is empty 
+        if self.computed_results.size>0:
+            #if not empty extracts the most recent row in the 
+            #computed results 2d array 
+            recent_result=self.computed_results[-1]
+            #checks if new results and recent result contain contiguous blocks of the 
+            #same tasks
+            if recent_result[0]==new_results[0] and recent_result[2]==new_results[1]:
+                #merging contiguous blocks of the same task
+                recent_result[2]=new_results[2]
+         
+            else:
+                self.computed_results=np.concatenate([self.computed_results,
+                                                     [new_results]])
+        else:
+            self.computed_results=np.array([new_results])
+
+    def compute(self) -> np.ndarray:
+        """
+        Computes the scheduling base on the earliest deadline first cpu scheduling 
+        algorithm
+
+        Return 
+        ----------
+        computed_results: np.array
+            A 2d array of shape (N,4) where N denotes the number of task that have 
+            been run. This is determined based on self.end_time. Each column represents
+            the task_num, start_time, end_time and frequency in that order. Note the 
+            frequency here is always one.
+
+        """
+        dict_info={}
+        #setting up period counter to keep track of deadlines 
+        self.period_counter=np.ones(self.periods.shape,dtype=int)
+        self.inv_counter=np.zeros(self.periods.shape,dtype=int)
+
+        current_time=0
+        #change: end simulation with end of invocation time of all task 
+        while any(self.inv_counter<self.num_invocations) and current_time<self.end_time:
+            
+
+            next_deadlines=self.periods*self.period_counter
+            
+            #extracting running task from ready queue
+            running_task=self._get_task()
+
+            if running_task is None:
+                #finding nearest task if ready queue is empty 
+                nearest_task=np.argmin(next_deadlines)
+                nearest_release=next_deadlines[nearest_task]
+
+                if self.inv_counter[nearest_task]<self.num_invocations:
+                    #jumping current time to nearest deadline 
+                    current_time=nearest_release
+                    self._insert_nearest_task(nearest_task)
+                    
+                #updating period counter of nearest task to reflect new deadline
+                self.period_counter[nearest_task]+=1
+                
+            else:
+                #if running task is valid/ready queue is not empty 
+                #extracting details from running task
+                task_num=int(running_task[0])
+                deadline=running_task[1]
+                inv_exec_t=running_task[2]
+
+                exec_t,freq=self._compute_frequency(inv_exec_t,task_num)
+
+                #end time if running task runs till completion 
+                task_end_time=current_time+exec_t
+
+                #checks is running task is interrupted by upcoming deadlines
+                if all(task_end_time<next_deadlines):
+                    #if not interrupted storing the execution of running task
+                    temp_results=[task_num,current_time,task_end_time,freq]
+                    self._insert_computed_results(temp_results)
+                    current_time = task_end_time
+                    self.inv_counter[task_num]+=1
+
+                else:
+                    #if task is interrupted 
+                    #finding immediate task 
+                    interrupting_task=np.argmin(next_deadlines)
+                    interrupting_release=next_deadlines[interrupting_task]
+
+                    #change: maybe remaining exec time should be stored based on F=1
+                    #calculating remaining execution time of iterrupting running task
+                    running_remain_exec=task_end_time-interrupting_release
+                    running_remain_exec=running_remain_exec*freq
+
+                    if self.inv_counter[interrupting_task]<self.num_invocations:
+                        #extracting invocation time
+                        self._insert_interrupted_task(interrupting_task)
+                        
+                    #incrementing counter to reflect new deadline of interrupting task
+                    self.period_counter[interrupting_task]+=1
+
+
+                    #inserting running task in ready queue if execution is not complete 
+                    if running_remain_exec>0:
+                        self._insert_task([task_num,
+                                           deadline,
+                                           running_remain_exec])
+                    else:
+                        self.inv_counter[task_num]+=1
+                        
+                    #dict_info=self._check_missed_deadline()
+                    #storing the execution of running task before interruption 
+                    if current_time!=interrupting_release:
+                        temp_results=[task_num,current_time,interrupting_release,freq]
+                        self._insert_computed_results(temp_results)
+                    current_time=interrupting_release
+                    
+
+        return self.computed_results,dict_info
 
     
 class CycleEDF():
