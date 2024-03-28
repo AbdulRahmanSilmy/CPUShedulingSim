@@ -143,20 +143,6 @@ class CycleEDF():
 
         return exec_t,freq
 
-    def _get_next_deadlines(self,period_counter):
-
-        #next_deadlines=period_counter.copy().astype(float)
-
-        #for i,counter in enumerate(period_counter):
-        #    if counter>self.num_invocations:
-        #        next_deadlines[i]=np.inf
-        #    else:
-        #        next_deadlines[i]=self.periods[i]*period_counter[i]
-
-        next_deadlines=self.periods*period_counter
-
-        return next_deadlines
-
 
     def compute(self) -> np.ndarray:
         """
@@ -182,8 +168,8 @@ class CycleEDF():
         while any(inv_counter<self.num_invocations):
             
 
-            #next_deadlines=self.periods*period_counter
-            next_deadlines=self._get_next_deadlines(period_counter)
+            next_deadlines=self.periods*period_counter
+            
             #extracting running task from ready queue
             running_task=self._get_task()
 
