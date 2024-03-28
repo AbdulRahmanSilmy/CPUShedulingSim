@@ -80,14 +80,6 @@ margin_button_clear_tasks = (-60,0,0,100)
 margin_button_run = (-185,0,0,450)
 
 
-margin_display_release_time = (-201,0,0,0)
-margin_display_wc_exec_time = (-151,0,0,0)
-
-margin_button_add_task = (-60,0,0,100)
-margin_button_clear_tasks = (-60,0,0,100)
-margin_button_run = (-185,0,0,450)
-
-
 margin_background_UI = (-440,0,0,20)
 
 #-------------------------------------
@@ -350,14 +342,6 @@ def show_task_result(task_x_coord, task_width, frequency, label, task_count):
 
     
 
-
-#-------------------------------------
-    # Shutdown Thread Callbacks
-#-------------------------------------
-
-# in case we run into issues when testing, or the user is done with their work, the simulator can be shut down
-# ctrl + c doesn't actually kill the threads, this is an easy mechanism to achieving it
-
 def show_shutdown_ui(show_popup, confirm_string):
     
     if show_popup:
@@ -400,6 +384,31 @@ def master_thread(t_master_button_run_pressed):
   while threading.main_thread().is_alive():
 
     if button_run_pressed.wait():
+
+        if button_dropdown_algo.value == 'FCFS':
+
+            task_info = {   "scheduling_algo":'first_come_first_serve',
+                            'release_time':FCFS_release_time,
+                            'wc_exec_time':FCFS_wc_exec_time
+                        }
+
+            results, dict_info = cpu_scheduling_compute(task_info)
+
+            # the callback will repeatedly add bars for each task
+            for row in results:
+
+                task_x_coord = np.mean(row[1:3])
+                task_width = row[2] - row[1]
+                frequency = row[3]
+                label = f'Task {int(row[0])+1}'
+                task_count = int(row[0])
+                
+                app_doc.add_next_tick_callback(partial(show_task_result, task_x_coord, task_width, frequency, label, task_count))
+
+        button_run_pressed.clear()
+      
+    print("Simulating stuff...")
+    time.sleep(1)
 
         if button_dropdown_algo.value == 'FCFS':
 
