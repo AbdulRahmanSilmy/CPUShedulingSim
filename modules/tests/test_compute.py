@@ -14,7 +14,7 @@ def test_FCFS(task_info,expected_results):
     task_info["scheduling_algo"]='first_come_first_serve'
     results,dict_info=cpu_scheduling_compute(task_info)
 
-    assert np.array_equal(results,expected_results), "computed results don't match expected results" 
+    assert np.allclose(results,expected_results), "computed results don't match expected results" 
 
 
 @pytest.mark.parametrize("task_info, expected_results",
@@ -75,7 +75,7 @@ def test_RM(task_info,expected_results):
     task_info["scheduling_algo"]='rate_monotonic'
     results,dict_info=cpu_scheduling_compute(task_info)
 
-    assert np.array_equal(results,expected_results), "computed results don't match expected results" 
+    assert np.allclose(results,expected_results), "computed results don't match expected results" 
 
 
 @pytest.mark.parametrize("task_info, expected_results",
@@ -97,4 +97,32 @@ def test_EDF(task_info,expected_results):
     task_info["scheduling_algo"]='earliest_deadline_first'
     results,dict_info=cpu_scheduling_compute(task_info)
 
-    assert np.array_equal(results,expected_results), "computed results don't match expected results" 
+    assert np.allclose(results,expected_results), "computed results don't match expected results" 
+
+
+@pytest.mark.parametrize("task_info, expected_results",
+                         [({"periods": np.array([8,10,14]),
+                            "wc_exec_time": np.array([3,3,1]),
+                            "invocations":[[2,1,1],
+                                           [1,1,1]]}, 
+                            np.array([[ 0.        ,  0.        ,  2.67942584,  0.74642857],
+                                      [ 1.        ,  2.67942584,  4.28862124,  0.62142857],
+                                      [ 2.        ,  4.28862124,  6.6615026 ,  0.42142857],
+                                      [ 0.        ,  8.        ,  9.83006536,  0.54642857],
+                                      [ 1.        , 10.        , 12.01438849,  0.49642857],
+                                      [ 2.        , 14.        , 17.37349398,  0.29642857]])),
+                          ({'periods':np.array([6,8,12]),
+                              'wc_exec_time':np.array([2,3,3]),
+                              'invocations':[[1,1,2],
+                                             [1,1,1]]}, 
+                              np.array([[ 0.        ,  0.        ,  1.04347826,  0.95833333],
+                                        [ 1.        ,  1.04347826,  2.30663616,  0.79166667],
+                                        [ 2.        ,  2.30663616,  5.99894385,  0.54166667],
+                                        [ 0.        ,  6.        ,  7.6       ,  0.625     ],
+                                        [ 1.        ,  8.        ,  9.41176471,  0.70833333],
+                                        [ 2.        , 12.        , 13.84615385,  0.54166667]]))])
+def test_CycleEDF(task_info,expected_results):
+    task_info["scheduling_algo"]='CycleEDF'
+    results,dict_info=cpu_scheduling_compute(task_info)
+
+    assert np.allclose(results,expected_results), "computed results don't match expected results" 
