@@ -80,6 +80,14 @@ margin_button_clear_tasks = (-60,0,0,100)
 margin_button_run = (-185,0,0,450)
 
 
+margin_display_release_time = (-201,0,0,0)
+margin_display_wc_exec_time = (-151,0,0,0)
+
+margin_button_add_task = (-60,0,0,100)
+margin_button_clear_tasks = (-60,0,0,100)
+margin_button_run = (-185,0,0,450)
+
+
 margin_background_UI = (-440,0,0,20)
 
 #-------------------------------------
@@ -321,187 +329,6 @@ def collect_task():
 button_add_task.on_click(collect_task) 
 
 
-#TODO - clear any data that was collected from a previous algo options, to have a clean slate
-def show_options(attr, old, new):
-    
-    global count_task
-    
-    button_add_task.visible = True
-    button_clear_tasks.visible = True
-    label_task_count.visible = True
-    button_run.visible = True
-    
-    # TODO - let this condition also handle transitions from the other algo options, to FCFS
-    if (new == 'FCFS') and (old == 'RM'):
-        print('Went to FCFS from RM')
-        RM_exec_time.clear()
-        RM_period.clear()
-
-    elif (new == 'FCFS') and (old == 'CC EDF'):
-        print('Went from CC EDF to RM')
-        CC_EDF_wc_exec_time.clear()
-        CC_EDF_period.clear()
-        CC_EDF_invocation.clear()
-
-    if new == 'FCFS':
-        
-        # TODO - clear the lists that the other algorithms use here
-        
-        # invisible the others, show the U/I for release time, w.c exec time, add new task, clear task, run
-        print('You chose FCFS')
-
-        label_task_count.visible = True
-        label_release_time.visible = True
-        label_wc_exec_time.visible = True
-        display_release_time.visible = True
-        display_wc_exec_time.visible = True
-        
-        count_task = 1
-        label_task_count.text = f"""<u>Task {count_task}:</u>"""
-
-
-    # TODO - let this condition also handle transitions from the other algo options, to RM
-    if (new == 'RM') and (old == 'FCFS'):
-        print('Went to RM from FCFS')
-        FCFS_release_time.clear()
-        FCFS_wc_exec_time.clear()
-        
-    elif (new == 'RM') and (old == 'CC EDF'):
-        print('Went to RM from CC EDF')
-        CC_EDF_wc_exec_time.clear()
-        CC_EDF_period.clear()
-        CC_EDF_invocation.clear()
-        
-    if new == 'RM':
-
-        # TODO - add extra U/I and U/I behaviour for RM
-        
-        print('You chose RM')
-        
-        label_task_count.visible = False
-        label_release_time.visible = False
-        label_wc_exec_time.visible = False
-        display_release_time.visible = False
-        display_wc_exec_time.visible = False
-
-        count_task = 1
-        label_task_count.text = f"""<u>Task {count_task}:</u>"""
-
-    if (new == 'CC EDF') and (old == 'FCFS'):
-        print('Went to RM from FCFS')
-        FCFS_release_time.clear()
-        FCFS_wc_exec_time.clear()
-
-    elif (new == 'CC EDF') and (old == 'RM'):
-        print('Went to RM from CC EDF')
-        RM_exec_time.clear()
-        RM_period.clear()
-
-    if new == 'CC EDF':
-
-        # TODO - clear the lists that the other algorithms use here
-
-        print("You chose CC EDF")
-
-        label_task_count.visible = True
-        label_period.visible = True
-        label_wc_exec_time.visible = True
-        label_invocation.visible = True
-        display_wc_exec_time.visible = True
-        display_invocation.visible = True
-        display_period.visble = True
-
-        count_task = 1
-        label_task_count.text = f"""<u>Task {count_task}:</u>"""
-
-
-button_dropdown_algo.on_change("value", show_options)
-
-
-def collect_task():
-
-    global count_task
-    
-    # the value of the dropdown button will dictate what task info to collect
-    if button_dropdown_algo.value == 'FCFS':
-
-        FCFS_release_time.append(display_release_time.value)
-        FCFS_wc_exec_time.append(display_wc_exec_time.value)
-        display_release_time.value = 0
-        display_wc_exec_time.value = 0
-    
-        print(f'Release times (FCFS): {FCFS_release_time}')
-        print(f'W.C Ex. times (FCFS): {FCFS_wc_exec_time}')
-
-    elif button_dropdown_algo.value == 'CC EDF':
-
-        CC_EDF_wc_exec_time.append(display_wc_exec_time.value)
-        CC_EDF_invocation.append(display_invocation.value)
-        CC_EDF_period.append(display_period.value)
-        display_wc_exec_time.value = 0
-        display_invocation.value = 0
-        display_period.value = 0
-
-        print(f'W.C Ex. times (CC EDF): {CC_EDF_wc_exec_time}')
-        print(f'Invocations (CC EDF): {CC_EDF_invocation}')
-        print(f'Periods (CC EDF): {CC_EDF_period}')  
-    
-    count_task += 1
-    label_task_count.text = f"""<u>Task {count_task}:</u>"""
-button_add_task.on_click(collect_task) 
-
-
-# clears the task data collected for a given algorithm
-#TODO - add the clearing option for the other algos
-def clear_tasks():
-    
-    global count_task
-    
-    count_task = 1
-    label_task_count.text = f"""<u>Task {count_task}:</u>"""
-    
-    if button_dropdown_algo.value == 'FCFS':
-        
-        FCFS_release_time.clear()
-        FCFS_wc_exec_time.clear()
-
-    elif button_dropdown_algo.value == 'CC EDF':
-
-        CC_EDF_wc_exec_time.clear()
-        CC_EDF_invocation.clear()
-        CC_EDF_period.clear()
-button_clear_tasks.on_click(clear_tasks)
-
- 
-# signals the master thread to collect the appropriate scheduling info
-def run():
-
-    # checking whether the run button has already been clicked and is being processed
-    # if the button action hasn't finished yet, the next click can't operate yet
-    if not button_run_pressed.wait(timeout = 0.05):
-        
-        button_run_pressed.set()
-button_run.on_event(ButtonClick,run)  
-
-
-def show_shutdown_popup():
-    
-    button_shutdown_pressed.set()
-button_show_shutdown.on_event(ButtonClick,show_shutdown_popup)
-
-
-def hide_shutdown_popup():
-    
-    button_shutdown_pressed.clear()
-button_shutdown_no.on_event(ButtonClick,hide_shutdown_popup)
-
-
-def trigger_shutdown():
-    
-    shutdown_confirmed.set()  
-button_shutdown_yes.on_event(ButtonClick,trigger_shutdown) 
-
-
 #-------------------------------------
     # Master Thread Callbacks
 #-------------------------------------
@@ -522,20 +349,6 @@ def show_task_result(task_x_coord, task_width, frequency, label, task_count):
     print('done displaying')
 
     
-
-# applies vertical bars for task results
-def show_task_result(task_x_coord, task_width, frequency, label, task_count):
-    
-    # TODO - make it possible to use distinct colours for any number of tasks
-    plot_colors=['blue','green','red','pink','orange','yellow']
-    
-    figure_results.vbar(x = task_x_coord, width = task_width, top = frequency, fill_color = plot_colors[task_count])
-    figure_results.y_range.start = 0
-    figure_results.xgrid.grid_line_color = None
-    figure_results.xaxis.axis_label = "Time"
-    figure_results.yaxis.axis_label = "Frequency"
-    figure_results.outline_line_color = None
-    print('done displaying')
 
 
 #-------------------------------------
@@ -587,6 +400,31 @@ def master_thread(t_master_button_run_pressed):
   while threading.main_thread().is_alive():
 
     if button_run_pressed.wait():
+
+        if button_dropdown_algo.value == 'FCFS':
+
+            task_info = {   "scheduling_algo":'first_come_first_serve',
+                            'release_time':FCFS_release_time,
+                            'wc_exec_time':FCFS_wc_exec_time
+                        }
+
+            results, dict_info = cpu_scheduling_compute(task_info)
+
+            # the callback will repeatedly add bars for each task
+            for row in results:
+
+                task_x_coord = np.mean(row[1:3])
+                task_width = row[2] - row[1]
+                frequency = row[3]
+                label = f'Task {int(row[0])+1}'
+                task_count = int(row[0])
+                
+                app_doc.add_next_tick_callback(partial(show_task_result, task_x_coord, task_width, frequency, label, task_count))
+
+        button_run_pressed.clear()
+      
+    print("Simulating stuff...")
+    time.sleep(1)
 
         if button_dropdown_algo.value == 'FCFS':
 
