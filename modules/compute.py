@@ -28,7 +28,7 @@ class CPUScheduler(ABC):
         pass
 
     @abstractmethod
-    def _insert_interrupted_task(self,interrupting_task):
+    def _insert_interrupting_task(self,interrupting_task):
         pass
     
     @abstractmethod
@@ -195,7 +195,7 @@ class CPUScheduler(ABC):
 
                     if self.inv_counter[interrupting_task]<self.num_invocations:
                         #extracting invocation time
-                        self._insert_interrupted_task(interrupting_task)
+                        self._insert_interrupting_task(interrupting_task)
                         
                     #incrementing counter to reflect new deadline of interrupting task
                     self.period_counter[interrupting_task]+=1
@@ -318,7 +318,7 @@ class CycleEDF(CPUScheduler):
                             nearest_deadline,
                             inv_exec_t])
         
-    def _insert_interrupted_task(self,interrupting_task):
+    def _insert_interrupting_task(self,interrupting_task):
         """
         Inserting interrupting task into ready queue
 
@@ -411,7 +411,7 @@ class EDF(CPUScheduler):
                            nearest_deadline,
                            self.wc_exec_time[nearest_task]])
         
-    def _insert_interrupted_task(self, interrupting_task):
+    def _insert_interrupting_task(self, interrupting_task):
         """
         Inserting interrupting task into ready queue
 
@@ -517,7 +517,7 @@ class RateMonotonic(CPUScheduler):
                            self.periods[nearest_task],
                            self.wc_exec_time[nearest_task]])
         
-    def _insert_interrupted_task(self, interrupting_task):
+    def _insert_interrupting_task(self, interrupting_task):
         """
         Inserting interrupting task into ready queue
 
