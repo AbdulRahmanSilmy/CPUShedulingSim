@@ -77,19 +77,6 @@ class CPUScheduler(ABC):
         """
         self.ready_queue=np.concatenate([self.ready_queue,[task]])
 
-    def _insert_task(self,task:np.ndarray):
-        """
-        Inserts new task to the ready_queue.
-
-        Parameters
-        -----------
-        task: np.ndarray
-            A 1d array of shape (3,) that contains task_number, task_deadline 
-            and task_remaining_execution_time in that order.
-          
-        """
-        self.ready_queue=np.concatenate([self.ready_queue,[task]])
-
     def _insert_computed_results(self,new_results):
         """
         Inserting new results into computed results. If new results task and 
