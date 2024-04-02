@@ -371,60 +371,6 @@ button_shutdown_yes =  Button(
 
 # these are the functions that will be tied to buttons (e.g "play", "reset", "shutdown", maybe "save" if we have time?)
 
-#TODO - clear any data that was collected from a previous algo options, to have a clean slate
-def show_options(attr, old, new):
-    
-    if new == 'FCFS':
-        
-        # invisible the others, show the U/I for release time, w.c exec time, add new task, clear task, run
-        print('You chose FCFS')
-
-        label_task_count.visible = True
-        label_release_time.visible = True
-        label_wc_exec_time.visible = True
-        display_release_time.visible = True
-        display_wc_exec_time.visible = True
-        button_add_task.visible = True
-        button_clear_tasks.visible = True
-        button_run.visible = True
-        
-    if new == 'RM':
-
-        # TODO - add extra U/I and U/I behaviour for RM
-        print('You chose RM')    
-button_dropdown_algo.on_change("value", show_options)
-
-# signals the master thread to collect the appropriate scheduling info
-def run():
-
-    # checking whether the run button has already been clicked and is being processed
-    # if the button action hasn't finished yet, the next click can't operate yet
-    if not button_run_pressed.wait(timeout = 0.05):
-        
-        button_run_pressed.set()
-button_run.on_event(ButtonClick,run)  
-
-def collect_task():
-
-    global count_task
-    
-    # the value of the dropdown button will dictate what task info to collect
-    if button_dropdown_algo.value == 'FCFS':
-
-        FCFS_release_time.append(display_release_time.value)
-        FCFS_wc_exec_time.append(display_wc_exec_time.value)
-        display_release_time.value = 0
-        display_wc_exec_time.value = 0
-    
-        print(f'Release times: {FCFS_release_time}')
-        print(f'W.C Ex. times: {FCFS_wc_exec_time}')
-        
-    # clear the inputs for the next entry
-    count_task += 1
-    label_task_count.text = f"""<u>Task {count_task}:</u>"""
-    
-button_add_task.on_click(collect_task) 
-
 
 #TODO - clear any data that was collected from a previous algo options, to have a clean slate
 def show_options(attr, old, new):
@@ -560,20 +506,6 @@ button_shutdown_yes.on_event(ButtonClick,trigger_shutdown)
 
 # the U/I changes have to be caused by threads, with those U/I changes coming in through server callbacks
 
-# applies vertical bars for task results
-def show_task_result(task_x_coord, task_width, frequency, label, task_count):
-
-    # TODO - make it possible to use distinct colours for any number of tasks
-    plot_colors=['blue','green','red','pink','orange','yellow']
-    
-    figure_results.vbar(x = task_x_coord, width = task_width, top = frequency, fill_color = plot_colors[task_count])
-    figure_results.y_range.start = 0
-    figure_results.xgrid.grid_line_color = None
-    figure_results.xaxis.axis_label = "Time"
-    figure_results.outline_line_color = None
-    print('done displaying')
-
-    
 
 # applies vertical bars for task results
 def show_task_result(task_x_coord, task_width, frequency, label, task_count):
