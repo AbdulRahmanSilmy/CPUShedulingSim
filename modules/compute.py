@@ -18,6 +18,7 @@ class CPUScheduler(ABC):
         
         self._initialize_ready_queue()
         self.computed_results=np.array([[]])
+        self.dict_info={}
 
     @abstractmethod
     def _compute_frequency(self,inv_exec_t,task_num):
@@ -33,6 +34,10 @@ class CPUScheduler(ABC):
     
     @abstractmethod
     def _initialize_ready_queue(self):
+        pass
+    
+    @abstractmethod
+    def _check_schedulability(self):
         pass
 
     def _get_task(self) -> Optional[np.ndarray]:
@@ -121,7 +126,7 @@ class CPUScheduler(ABC):
             frequency here is always one.
 
         """
-        dict_info={}
+        self._check_schedulability()
         #setting up period counter to keep track of deadlines 
         self.period_counter=np.ones(self.periods.shape,dtype=int)
         self.inv_counter=np.zeros(self.periods.shape,dtype=int)
@@ -204,7 +209,7 @@ class CPUScheduler(ABC):
                     current_time=interrupting_release
                     
 
-        return self.computed_results,dict_info
+        return self.computed_results,self.dict_info
 
     
 class CycleEDF(CPUScheduler):
@@ -251,6 +256,19 @@ class CycleEDF(CPUScheduler):
         Initiliazed the ready queue will be used in the parent class CPUScheduler
         """
         self.ready_queue=np.array([[i,per,inv_exec_t] for i,(per,inv_exec_t) in enumerate(zip(self.periods,self.invocations[0,:]))])
+
+    def _check_schedulability(self):
+        """
+        Checking the schedulability and updating dict info returned by self.compute
+        """
+        utilization = sum(self.wc_exec_time/self.periods)
+        utilization_bound = 1
+        if utilization<=utilization_bound:
+            result="yes"
+        else:
+            result="no"
+        
+        self.dict_info['schedulability']=result
 
 
     def _compute_frequency(self,inv_exec_t,task_num):
@@ -359,6 +377,19 @@ class EDF(CPUScheduler):
         #Initializing a ready queue with all tasks starting at time 0
         self.ready_queue=np.array([[i,per,exec_t] for i,(per,exec_t) in enumerate(zip(self.periods,self.wc_exec_time))])
 
+    def _check_schedulability(self):
+        """
+        Checking the schedulability and updating dict info returned by self.compute
+        """
+        utilization = sum(self.wc_exec_time/self.periods)
+        utilization_bound = 1
+        if utilization<=utilization_bound:
+            result="yes"
+        else:
+            result="no"
+        
+        self.dict_info['schedulability']=result
+
     def _compute_frequency(self, inv_exec_t, task_num):
         """
         Computes the frequency and resulting execution time. It is used by the 
@@ -465,6 +496,20 @@ class RateMonotonic(CPUScheduler):
         """
         #Initializing a ready queue with all tasks starting at time 0
         self.ready_queue=np.array([[i,per,exec_t] for i,(per,exec_t) in enumerate(zip(self.periods,self.wc_exec_time))])
+
+    def _check_schedulability(self):
+        """
+        Checking the schedulability and updating dict info returned by self.compute
+        """
+        utilization = sum(self.wc_exec_time/self.periods)
+        num_tasks=len(self.wc_exec_time)
+        utilization_bound = num_tasks*(2**(1/num_tasks)-1)
+        if utilization<=utilization_bound:
+            result="yes"
+        else:
+            result="maybe"
+        
+        self.dict_info['schedulability']=result
 
     def _compute_frequency(self, inv_exec_t, task_num):
         """
