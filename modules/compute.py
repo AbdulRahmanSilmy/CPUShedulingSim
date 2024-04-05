@@ -201,8 +201,8 @@ class CPUScheduler(ABC):
                     
                     deadline_missed, task_missed = self._check_missed_deadline()
                     if deadline_missed:
-                        dict_info = {"missed_task_num": float(task_missed), "miss_occurance": interrupting_release*(self.period_counter[interrupting_task]-1)}
-                        print(dict_info)
+                        self.dict_info["missed_task_num"] = float(task_missed)
+                        self.dict_info["miss_occurance"] = interrupting_release*(self.period_counter[interrupting_task]-1)
                     #storing the execution of running task before interruption 
                     if current_time!=interrupting_release:
                         temp_results=[task_num,current_time,interrupting_release,freq]
@@ -215,15 +215,6 @@ class CPUScheduler(ABC):
         return self.computed_results,self.dict_info
 
     def _check_missed_deadline(self):
-        # def rateMonotonic_sufficient_sched():
-        #     sumUtil = sum(self.wc_exec_time/self.periods)
-        #     nTask = len(self.wc_exec_time)
-        #     utilBound = nTask*(pow(2, (1/nTask))-1)
-        #     return sumUtil <= utilBound
-        # def cycleEDF_sufficient_sched():
-        #     sumUtil = sum(self.wc_exec_time/self.periods)
-        #     utilBound = 1
-        #     return sumUtil <= utilBound
         u, c = np.unique(self.ready_queue[:,0], return_counts=True)
         duplicated_task = u[c > 1]
         duplicated_task+=1
@@ -287,7 +278,6 @@ class CycleEDF(CPUScheduler):
         
         self.dict_info['schedulability']=result
 
-
     def _compute_frequency(self,inv_exec_t,task_num):
         """
         Computes the frequency and resulting execution time. It is used by the 
@@ -312,6 +302,8 @@ class CycleEDF(CPUScheduler):
         prior_bc=self.bc_exec_time[task_num].copy()
         self.bc_exec_time[task_num]=self.wc_exec_time[task_num].copy()
         freq=sum(self.bc_exec_time/self.periods)
+        if freq > 1:
+            freq = 1
         exec_t=inv_exec_t/freq
 
         if inv_exec_t<prior_bc:
@@ -599,9 +591,12 @@ class FCFS():
 
     """
 
-    def __init__(self,release_time: np.ndarray, wc_exec_time: np.ndarray):
+    def __init__(self,release_time: np.ndarray, wc_exec_time: np.ndarray, deadlines: np.ndarray):
+    # def __init__(self,release_time: np.ndarray, wc_exec_time: np.ndarray):
         self.release_time=release_time
         self.wc_exec_time=wc_exec_time
+        self.deadlines = deadlines
+        self.dict_info = {}
 
     def compute(self):
         """
@@ -614,7 +609,6 @@ class FCFS():
             end_time and frequency in that order. Note the frequency here is always one.
 
         """
-        dict_info={}
         #sorting tasks based on release time 
         task_sorted=np.argsort(self.release_time)
         current_time=0
@@ -629,16 +623,25 @@ class FCFS():
                 start_time=current_time
             wc_exec_time=self.wc_exec_time[task]
 
-            #storing task execution within computed results
-            computed_results.append([task,start_time,start_time+wc_exec_time,1])
-
+            # Check missed deadlines
+            if start_time+wc_exec_time > self.deadlines[task]:
+                self.dict_info['schedulability']= "no"
+                self.dict_info["missed_task_num"] = task+1
+                self.dict_info["miss_occurance"] = self.deadlines[task]
+                #storing task execution within computed results
+                computed_results.append([task,start_time,self.deadlines[task],1])
+                break
+            else:
+                self.dict_info['schedulability']= "yes"
+                #storing task execution within computed results
+                computed_results.append([task,start_time,start_time+wc_exec_time,1])
+            
             #updating current tiem 
-            current_time=start_time+wc_exec_time    
+            current_time=start_time+wc_exec_time
 
         computed_results=np.array(computed_results,dtype=float)
 
-        return computed_results,dict_info
-
+        return computed_results,self.dict_info
 
 ALGO_MAPPING={'rate_monotonic':RateMonotonic,
               'first_come_first_serve':FCFS,
