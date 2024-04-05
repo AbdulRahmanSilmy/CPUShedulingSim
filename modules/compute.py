@@ -129,15 +129,13 @@ class CPUScheduler(ABC):
         current_time=0
         #change: end simulation with end of invocation time of all task 
         while any(self.inv_counter<self.num_invocations) and current_time<self.end_time:
-            
 
             next_deadlines=self.periods*self.period_counter
-            
             #extracting running task from ready queue
             running_task=self._get_task()
 
             if running_task is None:
-                #finding nearest task if ready queue is empty 
+                #finding nearest task if ready queue is empty
                 nearest_task=np.argmin(next_deadlines)
                 nearest_release=next_deadlines[nearest_task]
 
@@ -195,17 +193,33 @@ class CPUScheduler(ABC):
                                            running_remain_exec])
                     else:
                         self.inv_counter[task_num]+=1
-                        
-                    #dict_info=self._check_missed_deadline()
+                    
+                    deadline_missed, task_missed = self._check_missed_deadline()
+                    if deadline_missed:
+                        dict_info = {"missed_task_num": float(task_missed), "miss_occurance": interrupting_release}
                     #storing the execution of running task before interruption 
                     if current_time!=interrupting_release:
                         temp_results=[task_num,current_time,interrupting_release,freq]
                         self._insert_computed_results(temp_results)
                     current_time=interrupting_release
+                    if deadline_missed:
+                        break
                     
-
         return self.computed_results,dict_info
 
+    def _check_missed_deadline(self):
+        # def rateMonotonic_sufficient_sched():
+        #     sumUtil = sum(self.wc_exec_time/self.periods)
+        #     nTask = len(self.wc_exec_time)
+        #     utilBound = nTask*(pow(2, (1/nTask))-1)
+        #     return sumUtil <= utilBound
+        # def cycleEDF_sufficient_sched():
+        #     sumUtil = sum(self.wc_exec_time/self.periods)
+        #     utilBound = 1
+        #     return sumUtil <= utilBound
+        u, c = np.unique(self.ready_queue[:,0], return_counts=True)
+        duplicated_task = u[c > 1]
+        return duplicated_task.size > 0, duplicated_task
     
 class CycleEDF(CPUScheduler):
     """
@@ -251,7 +265,6 @@ class CycleEDF(CPUScheduler):
         Initiliazed the ready queue will be used in the parent class CPUScheduler
         """
         self.ready_queue=np.array([[i,per,inv_exec_t] for i,(per,inv_exec_t) in enumerate(zip(self.periods,self.invocations[0,:]))])
-
 
     def _compute_frequency(self,inv_exec_t,task_num):
         """
@@ -457,7 +470,7 @@ class RateMonotonic(CPUScheduler):
                          wc_exec_time=wc_exec_time,
                          end_time=end_time,
                          invocations=None)
-        
+
     
     def _initialize_ready_queue(self):
         """
