@@ -39,7 +39,21 @@ class CPUScheduler(ABC):
     @abstractmethod
     def _check_schedulability(self):
         pass
+    
+    def _break_priority_tie(self, min_loc):
+        sub_ready_queue=self.ready_queue[min_loc,:]
+        sub_queue_rem_exec=sub_ready_queue[:,2]
+        sub_queue_wc_exec=self.wc_exec_time[sub_ready_queue[:,0]]
+        sub_ran_exec_t=sub_queue_wc_exec-sub_queue_rem_exec
+        #picking task ran the most 
+        max_index=np.argmax(sub_ran_exec_t)
+        running_task=sub_ready_queue[max_index]
 
+        delete_index=min_loc[max_index]
+
+        self.ready_queue=np.delete(self.ready_queue,delete_index,axis=0)
+
+        return running_task
     def _get_task(self) -> Optional[np.ndarray]:
         """
         Extracts the running task from the ready queue. Deletes running task 
@@ -59,10 +73,19 @@ class CPUScheduler(ABC):
             #extacting running task based on lowest period 
             ready_priority=self.ready_queue[:,1]
             min_index=np.argmin(ready_priority)
-            running_task=self.ready_queue[min_index]
+            min_val=ready_priority[min_index]
+            min_loc=np.where(ready_priority==min_val)[0]
+            num_min=len(min_loc)
+            
 
-            #deleting running task from ready queue 
-            self.ready_queue=np.delete(self.ready_queue,min_index,axis=0)
+            if num_min>1:
+                running_task=self._break_priority_tie(min_loc)
+            else:
+                running_task=self.ready_queue[min_index]
+
+                #deleting running task from ready queue 
+                self.ready_queue=np.delete(self.ready_queue,min_index,axis=0)
+            
         else:
             #returning None if ready queue is empty 
             running_task=None
