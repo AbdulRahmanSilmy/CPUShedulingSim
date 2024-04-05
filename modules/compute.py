@@ -202,7 +202,7 @@ class CPUScheduler(ABC):
                     deadline_missed, task_missed = self._check_missed_deadline()
                     if deadline_missed:
                         self.dict_info["missed_task_num"] = float(task_missed)
-                        self.dict_info["miss_occurance"] = interrupting_release*(self.period_counter[interrupting_task]-1)
+                        self.dict_info["miss_occurance"] = interrupting_release
                     #storing the execution of running task before interruption 
                     if current_time!=interrupting_release:
                         temp_results=[task_num,current_time,interrupting_release,freq]
