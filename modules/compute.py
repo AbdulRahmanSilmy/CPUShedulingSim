@@ -201,7 +201,8 @@ class CPUScheduler(ABC):
                     
                     deadline_missed, task_missed = self._check_missed_deadline()
                     if deadline_missed:
-                        dict_info = {"missed_task_num": float(task_missed), "miss_occurance": interrupting_release}
+                        dict_info = {"missed_task_num": float(task_missed), "miss_occurance": interrupting_release*(self.period_counter[interrupting_task]-1)}
+                        print(dict_info)
                     #storing the execution of running task before interruption 
                     if current_time!=interrupting_release:
                         temp_results=[task_num,current_time,interrupting_release,freq]
@@ -225,6 +226,7 @@ class CPUScheduler(ABC):
         #     return sumUtil <= utilBound
         u, c = np.unique(self.ready_queue[:,0], return_counts=True)
         duplicated_task = u[c > 1]
+        duplicated_task+=1
         return duplicated_task.size > 0, duplicated_task
     
 class CycleEDF(CPUScheduler):
