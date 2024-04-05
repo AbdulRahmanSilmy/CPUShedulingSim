@@ -210,12 +210,8 @@ class CPUScheduler(ABC):
                     if deadline_missed:
                         break
                     
-<<<<<<< HEAD
-        return self.computed_results,dict_info
-=======
 
         return self.computed_results,self.dict_info
->>>>>>> 4847d5e (added check for schedulability for RM)
 
     def _check_missed_deadline(self):
         # def rateMonotonic_sufficient_sched():
@@ -275,6 +271,20 @@ class CycleEDF(CPUScheduler):
         Initiliazed the ready queue will be used in the parent class CPUScheduler
         """
         self.ready_queue=np.array([[i,per,inv_exec_t] for i,(per,inv_exec_t) in enumerate(zip(self.periods,self.invocations[0,:]))])
+
+    def _check_schedulability(self):
+        """
+        Checking the schedulability and updating dict info returned by self.compute
+        """
+        utilization = sum(self.wc_exec_time/self.periods)
+        utilization_bound = 1
+        if utilization<=utilization_bound:
+            result="yes"
+        else:
+            result="no"
+        
+        self.dict_info['schedulability']=result
+
 
     def _compute_frequency(self,inv_exec_t,task_num):
         """
@@ -381,6 +391,19 @@ class EDF(CPUScheduler):
         """
         #Initializing a ready queue with all tasks starting at time 0
         self.ready_queue=np.array([[i,per,exec_t] for i,(per,exec_t) in enumerate(zip(self.periods,self.wc_exec_time))])
+
+    def _check_schedulability(self):
+        """
+        Checking the schedulability and updating dict info returned by self.compute
+        """
+        utilization = sum(self.wc_exec_time/self.periods)
+        utilization_bound = 1
+        if utilization<=utilization_bound:
+            result="yes"
+        else:
+            result="no"
+        
+        self.dict_info['schedulability']=result
 
     def _compute_frequency(self, inv_exec_t, task_num):
         """
