@@ -543,6 +543,19 @@ class EDF(CPUScheduler):
 
         self.dict_info['schedulability'] = result
 
+    def _check_schedulability(self):
+        """
+        Checking the schedulability and updating dict info returned by self.compute
+        """
+        utilization = sum(self.wc_exec_time/self.periods)
+        utilization_bound = 1
+        if utilization<=utilization_bound:
+            result="yes"
+        else:
+            result="no"
+        
+        self.dict_info['schedulability']=result
+
     def _compute_frequency(self, inv_exec_t, task_num):
         """
         Computes the frequency and resulting execution time. It is used by the 
@@ -666,6 +679,20 @@ class RateMonotonic(CPUScheduler):
             result = "maybe"
 
         self.dict_info['schedulability'] = result
+
+    def _check_schedulability(self):
+        """
+        Checking the schedulability and updating dict info returned by self.compute
+        """
+        utilization = sum(self.wc_exec_time/self.periods)
+        num_tasks=len(self.wc_exec_time)
+        utilization_bound = num_tasks*(2**(1/num_tasks)-1)
+        if utilization<=utilization_bound:
+            result="yes"
+        else:
+            result="maybe"
+        
+        self.dict_info['schedulability']=result
 
     def _compute_frequency(self, inv_exec_t, task_num):
         """
