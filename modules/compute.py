@@ -612,11 +612,14 @@ class FCFS():
 
     """
 
-    def __init__(self,release_time: np.ndarray, wc_exec_time: np.ndarray, deadlines: np.ndarray):
+    def __init__(self,release_time: np.ndarray, wc_exec_time: np.ndarray, deadlines: Optional[np.ndarray] = None):
     # def __init__(self,release_time: np.ndarray, wc_exec_time: np.ndarray):
         self.release_time=release_time
         self.wc_exec_time=wc_exec_time
-        self.deadlines = deadlines
+        if deadlines is None:
+            self.deadlines=np.repeat(np.inf,len(release_time))
+        else:
+            self.deadlines = deadlines
         self.dict_info = {}
 
     def compute(self):
