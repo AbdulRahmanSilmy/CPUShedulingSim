@@ -539,6 +539,7 @@ button_shutdown_yes =  Button(
             # Button Callbacks   
 #-------------------------------------
 
+# Button
 # these are the functions that will be tied to buttons (e.g "play", "reset", "shutdown", maybe "save" if we have time?)
 # Set default values for UI elements
 button_dropdown_algo.value = 'FCFS'
