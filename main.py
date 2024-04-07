@@ -554,6 +554,28 @@ def shutdown():
 # in case we run into issues when testing, or the user is done with their work, the simulator can be shut down
 # ctrl + c doesn't actually kill the threads, this is an easy mechanism to achieving it
 
+# applies vertical bars for task results
+def show_task_result(task_x_coord, task_width, frequency, label, task_count):
+    
+    # TODO - make it possible to use distinct colours for any number of tasks
+    plot_colors=['blue','green','red','pink','orange','yellow']
+    
+    figure_results.vbar(x = task_x_coord, width = task_width, top = frequency, fill_color = plot_colors[task_count])
+    figure_results.y_range.start = 0
+    figure_results.xgrid.grid_line_color = None
+    figure_results.xaxis.axis_label = "Time"
+    figure_results.yaxis.axis_label = "Frequency"
+    figure_results.outline_line_color = None
+    print('done displaying')
+
+
+#-------------------------------------
+    # Shutdown Thread Callbacks
+#-------------------------------------
+
+# in case we run into issues when testing, or the user is done with their work, the simulator can be shut down
+# ctrl + c doesn't actually kill the threads, this is an easy mechanism to achieving it
+
 def show_shutdown_ui(show_popup, confirm_string):
     
     if show_popup:
