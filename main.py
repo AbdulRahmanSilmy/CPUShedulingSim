@@ -60,6 +60,7 @@ FCFS_wc_exec_time: list[int] = list()
 # front-end list for RM release times
 RM_exec_time: list[int] = list()
 RM_period: list[int] = list()
+RM_exec_time: list[int] = list()
 
 # front-end list for EDF release times
 CC_EDF_wc_exec_time: list[int] = list()
@@ -78,8 +79,10 @@ count_task: int = 1
 # syntax: (top, right, bottom, left)
 
 margin_label_dropdown = (200,0,10,90)
+margin_label_num_invocations = (-200,-20,60,40)  # Label for the Num invocation label
 
 margin_button_dropdown_algo = (195,0,40,15)
+margin_button_dropdown_invocation = (-201,0,0,20)  # Button for dropdown invocation
 
 margin_figure_results = (-100,0,0,900)
 
@@ -87,21 +90,28 @@ margin_figure_results = (-100,0,0,900)
 margin_label_task_count = (-350,0,0,260)
 margin_label_release_time = (-300,-7,20,147)
 margin_label_wc_exec_time = (-250,10,40,40)
-margin_label_invocation = (-200,-20,60,167)
+margin_label_invocation1 = (-150,0,0,100)
+margin_label_invocation2 = (-150,0,0,300)
+margin_label_invocation3 = (-150,0,0,500)
 margin_label_period = (-300,-20,60,197)
 margin_label_exec_time = (-250,10,40,167)
+margin_label_end_time = (-200,10,40,173)
 
 margin_display_release_time = (-301,0,0,0)
 margin_display_period = (-301,0,0,-36)
 margin_display_wc_exec_time = (-251,0,0,0)
 margin_display_invocation = (-201,0,0,-97)
 margin_display_exec_time = (-251,0,0,-127)
+margin_display_invocation1 = (-150,0,0,-110)
+margin_display_invocation2 = (-150,0,0,-110)
+margin_display_invocation3 = (-150,0,0,-110)
+margin_display_end_time = (-200,0,0,-132)
 
 
-margin_button_add_task = (-160,0,0,100)
-margin_button_clear_tasks = (-160,0,0,100)
+margin_button_add_task = (-30,0,0,100)
+margin_button_clear_tasks = (-30,0,0,100)
 margin_button_run = (75,0,0,650)
-margin_button_show_shutdown = (-160,0,0,150)
+margin_button_show_shutdown = (-30,0,0,150)
 margin_button_shutdown_no = (-170,0,0,-300)
 margin_button_shutdown_yes = (-170,0,0,100)
 
@@ -204,6 +214,14 @@ label_dropdown = Div(
     styles = style_labels,
 )
 
+label_num_invocations = Div(
+    text = "<b>Choose Number of Invocations:</b>",
+    width=245,
+    height=30,
+    margin = margin_label_num_invocations,
+    styles = style_labels,
+)
+
 # to let the user be aware of what task they're currently configuring
 label_task_count = Div(
     text = """<u>Task 1:</u>""",
@@ -241,12 +259,29 @@ label_wc_exec_time = Div(
     styles = style_labels,
 )
 
-label_invocation = Div(
-    text = "<b>Invocation:</b>",
+label_invocation1 = Div(
+    text = "<b>Invocation 1:</b>",
     width=215,
     height=30,
     visible = False,
-    margin = margin_label_invocation,
+    margin = margin_label_invocation1,
+    styles = style_labels,
+)
+
+label_invocation2 = Div(
+    text = "<b>Invocation 2:</b>",
+    width=215,
+    height=30,
+    visible = False,
+    margin = margin_label_invocation2,
+    styles = style_labels,
+)
+label_invocation3 = Div(
+    text = "<b>Invocation 3:</b>",
+    width=215,
+    height=30,
+    visible = False,
+    margin = margin_label_invocation3,
     styles = style_labels,
 )
 
@@ -259,6 +294,14 @@ label_exec_time = Div(
     styles = style_labels,
 )
 
+label_end_time = Div(
+    text = "<b>End Time:</b>",
+    width=215,
+    height=30,
+    visible = False,
+    margin = margin_label_end_time,
+    styles = style_labels,
+)
 #-------------------------------------
     # Displays
 #-------------------------------------
@@ -321,6 +364,48 @@ display_exec_time = NumericInput(
     margin = margin_display_exec_time,
 )
 
+display_end_time = NumericInput(
+    mode = 'int',
+    value = 0,
+    low = 0,
+    width=65,
+    height = 25,
+    styles = style_displays,
+    visible = False,
+    margin = margin_display_end_time,
+)
+
+display_invocation1 = NumericInput(
+    mode = 'int',
+    value = 0,
+    low = 0,
+    width=65,
+    height = 25,
+    styles = style_displays,
+    visible = False,
+    margin = margin_display_invocation1,
+)
+display_invocation2 = NumericInput(
+    mode = 'int',
+    value = 0,
+    low = 0,
+    width=65,
+    height = 25,
+    styles = style_displays,
+    visible = False,
+    margin = margin_display_invocation2,
+)
+display_invocation3 = NumericInput(
+    mode = 'int',
+    value = 0,
+    low = 0,
+    width=65,
+    height = 25,
+    styles = style_displays,
+    visible = False,
+    margin = margin_display_invocation3,
+)
+
 #-------------------------------------
     # Miscellaneous U/I
 #-------------------------------------
@@ -339,7 +424,7 @@ figure_results = figure(
 
 background_UI = Div(
     width=760,
-    height=360,
+    height=500,
     visible = True,
     styles = style_background_UI,
     margin = margin_background_UI,
@@ -376,6 +461,16 @@ button_dropdown_algo = Select(
     value = "",
     options = ['FCFS', 'RM', 'CC EDF'],
     margin = margin_button_dropdown_algo,
+    styles = style_buttons,
+)
+
+button_dropdown_invocation = Select(
+    width=90,
+    height = 25,
+    visible = True,
+    value = "",
+    options = ['1', '2', '3'],
+    margin = margin_button_dropdown_invocation,
     styles = style_buttons,
 )
 
@@ -445,7 +540,28 @@ button_shutdown_yes =  Button(
 #-------------------------------------
 
 # these are the functions that will be tied to buttons (e.g "play", "reset", "shutdown", maybe "save" if we have time?)
-
+# Set default values for UI elements
+button_dropdown_algo.value = 'FCFS'
+label_task_count.visible = True
+label_release_time.visible = True
+label_wc_exec_time.visible = True
+label_period.visible = False
+label_exec_time.visible = False
+label_end_time.visible = False
+label_invocation1.visible = False
+label_invocation2.visible = False
+label_invocation3.visible = False
+label_num_invocations.visible = False
+display_release_time.visible = True
+display_wc_exec_time.visible = True
+display_period.visible = False
+display_invocation.visible = False
+display_exec_time.visible = False
+display_end_time.visible = False
+button_dropdown_invocation.visible = False
+button_add_task.visible = True
+button_clear_tasks.visible = True
+button_run.visible = True
 
 #TODO - clear any data that was collected from a previous algo options, to have a clean slate
 def show_options(attr, old, new):
@@ -481,12 +597,19 @@ def show_options(attr, old, new):
         label_wc_exec_time.visible = True
         label_period.visible = False
         label_exec_time.visible = False
-        label_invocation.visible = False
+        label_end_time.visible = False
+        label_invocation1.visible = False
+        label_invocation2.visible = False
+        label_invocation3.visible = False
+        label_num_invocations.visible = False
         display_release_time.visible = True
         display_wc_exec_time.visible = True
         display_period.visible = False  # Hide the period input field
         display_invocation.visible = False
         display_exec_time.visible = False
+        display_end_time.visible = False
+        button_dropdown_invocation.visible = False
+        
         
         count_task = 1
         label_task_count.text = f"""<u>Task {count_task}:</u>"""
@@ -514,13 +637,19 @@ def show_options(attr, old, new):
         label_period.visible = True
         label_release_time.visible = False
         label_wc_exec_time.visible = False
-        label_invocation.visible = False
+        label_invocation1.visible = False
+        label_invocation2.visible = False
+        label_invocation3.visible = False
         label_exec_time.visible = True
+        label_end_time.visible = True
+        label_num_invocations.visible = False
         display_period.visible = True
         display_release_time.visible = False
         display_wc_exec_time.visible = False
         display_invocation.visible = False
         display_exec_time.visible = True
+        display_end_time.visible = True
+        button_dropdown_invocation.visible = False
 
         count_task = 1
         label_task_count.text = f"""<u>Task {count_task}:</u>"""
@@ -545,20 +674,55 @@ def show_options(attr, old, new):
         label_period.visible = True
         label_wc_exec_time.visible = True
         label_exec_time.visible = False
-        label_invocation.visible = True
+        label_end_time.visible = False
+        label_invocation1.visible = False
+        label_invocation2.visible = False
+        label_invocation3.visible = False
+        label_num_invocations.visible = True
         label_release_time.visible = False
         display_period.visible = True
         display_wc_exec_time.visible = True
-        display_invocation.visible = True
+        display_invocation.visible = False
         display_release_time.visible = False    # Hide the release time input 
         display_exec_time.visible = False
+        display_end_time.visible = False
+        button_dropdown_invocation.visible = True
+    
+
 
         count_task = 1
         label_task_count.text = f"""<u>Task {count_task}:</u>"""
 
-
+# Register the callback function for the dropdown button
 button_dropdown_algo.on_change("value", show_options)
+button_dropdown_invocation.on_change('value', show_options)
 
+def show_invocation_labels(attr, old, new):
+    # Determine which label_invocation element to display based on the selected value
+    if new == '1':
+        label_invocation1.visible = True
+        label_invocation2.visible = False
+        label_invocation3.visible = False
+        display_invocation1.visible = True
+        display_invocation2.visible = False
+        display_invocation3.visible = False
+    elif new == '2':
+        label_invocation1.visible = True
+        label_invocation2.visible = True
+        label_invocation3.visible = False
+        display_invocation1.visible = True
+        display_invocation2.visible = True
+        display_invocation3.visible = False
+    elif new == '3':
+        label_invocation1.visible = True
+        label_invocation2.visible = True
+        label_invocation3.visible = True
+        display_invocation1.visible = True
+        display_invocation2.visible = True
+        display_invocation3.visible = True
+
+# Register the callback function for the dropdown button
+button_dropdown_invocation.on_change('value', show_invocation_labels)
 
 def collect_task():
 
@@ -800,9 +964,13 @@ my_layout = layout (  [
                         [label_task_count],
                         [label_period, display_period],
                         [label_exec_time, display_exec_time],
+                        [label_end_time, display_end_time],
                         [label_release_time, display_release_time],
                         [label_wc_exec_time, display_wc_exec_time],
-                        [label_invocation, display_invocation],
+                        [label_num_invocations, button_dropdown_invocation, blur_block],
+                        [label_invocation1, display_invocation1],
+                        [label_invocation2, display_invocation2],
+                        [label_invocation3, display_invocation3],
                         [button_add_task, button_clear_tasks, button_show_shutdown],
                         [popup_shutdown, button_shutdown_no, button_shutdown_yes],
                         [background_UI]
