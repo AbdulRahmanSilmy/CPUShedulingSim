@@ -83,16 +83,19 @@ margin_button_dropdown_algo = (195,0,40,15)
 
 margin_figure_results = (-100,0,0,900)
 
+# For FCFS
 margin_label_task_count = (-350,0,0,260)
 margin_label_release_time = (-300,-7,20,147)
 margin_label_wc_exec_time = (-250,10,40,40)
-margin_label_invocation = (-200,17,60,80)
-margin_label_period = (-150,17,60,80)
+margin_label_invocation = (-200,-20,60,167)
+margin_label_period = (-300,-20,60,197)
+
 
 margin_display_release_time = (-301,0,0,0)
+margin_display_period = (-301,0,0,-36)
 margin_display_wc_exec_time = (-251,0,0,0)
-margin_display_invocation = (-201,0,0,0)
-margin_display_period = (-151,0,0,0)
+margin_display_invocation = (-201,0,0,-97)
+
 
 margin_button_add_task = (-160,0,0,100)
 margin_button_clear_tasks = (-160,0,0,100)
@@ -219,6 +222,15 @@ label_release_time = Div(
     styles = style_labels,
 )
 
+label_period = Div(
+    text = "<b>Period:</b>",
+    width=125,
+    height=30,
+    visible = False,
+    margin = margin_label_period,
+    styles = style_labels,
+)
+
 label_wc_exec_time = Div(
     text = "<b>Worst-case Execution Time:</b>",
     width=215,
@@ -229,20 +241,11 @@ label_wc_exec_time = Div(
 )
 
 label_invocation = Div(
-    text = "<b>Invocation 1:</b>",
+    text = "<b>Invocation:</b>",
     width=215,
     height=30,
     visible = False,
     margin = margin_label_invocation,
-    styles = style_labels,
-)
-
-label_period = Div(
-    text = "<b>Invocation 1:</b>",
-    width=215,
-    height=30,
-    visible = False,
-    margin = margin_label_period,
     styles = style_labels,
 )
 
@@ -455,8 +458,12 @@ def show_options(attr, old, new):
         label_task_count.visible = True
         label_release_time.visible = True
         label_wc_exec_time.visible = True
+        label_period.visible = False
+        label_invocation.visible = False
         display_release_time.visible = True
         display_wc_exec_time.visible = True
+        display_period.visible = False  # Hide the period input field
+        display_invocation.visible = False
         
         count_task = 1
         label_task_count.text = f"""<u>Task {count_task}:</u>"""
@@ -509,9 +516,11 @@ def show_options(attr, old, new):
         label_period.visible = True
         label_wc_exec_time.visible = True
         label_invocation.visible = True
+        label_release_time.visible = False
+        display_period.visible = True
         display_wc_exec_time.visible = True
         display_invocation.visible = True
-        display_period.visble = True
+        display_release_time.visible = False    # Hide the release time input 
 
         count_task = 1
         label_task_count.text = f"""<u>Task {count_task}:</u>"""
@@ -544,9 +553,10 @@ def collect_task():
         display_invocation.value = 0
         display_period.value = 0
 
+        print(f'Periods (CC EDF): {CC_EDF_period}')  
         print(f'W.C Ex. times (CC EDF): {CC_EDF_wc_exec_time}')
         print(f'Invocations (CC EDF): {CC_EDF_invocation}')
-        print(f'Periods (CC EDF): {CC_EDF_period}')  
+        
     
     count_task += 1
     label_task_count.text = f"""<u>Task {count_task}:</u>"""
@@ -572,6 +582,7 @@ def clear_tasks():
         CC_EDF_wc_exec_time.clear()
         CC_EDF_invocation.clear()
         CC_EDF_period.clear()
+        
 button_clear_tasks.on_click(clear_tasks)
 
  
@@ -744,14 +755,15 @@ my_layout = layout (  [
                         [label_dropdown, button_dropdown_algo, blur_block],
                         [button_run, figure_results],                       
                         [label_task_count],
+                        [label_period, display_period],
                         [label_release_time, display_release_time],
-                        [label_wc_exec_time, display_wc_exec_time, ],
+                        [label_wc_exec_time, display_wc_exec_time],
+                        [label_invocation, display_invocation],
                         [button_add_task, button_clear_tasks, button_show_shutdown],
                         [popup_shutdown, button_shutdown_no, button_shutdown_yes],
                         [background_UI]
                       ]
                    )
-
 
 # declaring the document object for the app, so all threads access the same document & cause U/I changes
 app_doc = curdoc()
