@@ -9,14 +9,17 @@ The module is structures as follows:
 - The ``CPUScheduler`` is an abstract class where CPU schedulers with premption can inherit from.
 - The ``CycleEDF`` is a child class that compute the CPU schedule based on the Cycle Conservative
 earliest deadline first algorithm.
-- The ``EDF`` is a child class that compute the CPU schedule based on the earliest deadline first algorithm.  
-- The ``RateMonotonic`` is a child class that compute the CPU schedule based on the Rate Monotonic algorithm.  
-- The ``FCFS`` is a class that computeS the CPU schedule based on the firt come first serve algorithm.
+- The ``EDF`` is a child class that compute the CPU schedule based on the earliest deadline 
+first algorithm.  
+- The ``RateMonotonic`` is a child class that compute the CPU schedule based on the 
+Rate Monotonic algorithm.  
+- The ``FCFS`` is a class that computeS the CPU schedule based on the firt come first serve 
+algorithm.
 It does not have premption. 
 - The ``ALGO_MAPPING`` is a dictionary that maps user inputted strings to its corresponding class 
 for each CPU scheduling algorithm.
-- The ``cpu_scheduling_compute`` is the function that main.py interfaces with to receive the schedulability 
-results. 
+- The ``cpu_scheduling_compute`` is the function that main.py interfaces with to receive 
+the schedulability results. 
 
 Git Contributors:
 - AbdulRahmanSilmy
@@ -25,9 +28,9 @@ Git Contributors:
 - dynanomino 
 """
 # This module contains the
-import numpy as np
 from typing import Optional
 from abc import ABC, abstractmethod
+import numpy as np
 
 
 class CPUScheduler(ABC):
@@ -51,10 +54,10 @@ class CPUScheduler(ABC):
         Denoting when the simulation should end. Currently only used by RM and EDF.
     
     """
-    def __init__(self, 
+    def __init__(self,
                  wc_exec_time: np.ndarray, 
                  periods: np.ndarray, 
-                 invocations: Optional[np.ndarray] = None, 
+                 invocations: Optional[np.ndarray] = None,
                  end_time: Optional[float] = None):
         self.wc_exec_time = wc_exec_time
         self.periods = periods
@@ -92,7 +95,6 @@ class CPUScheduler(ABC):
         freq: float
             The frequency used to conserve energy. 
         """
-        pass
 
     @abstractmethod
     def _insert_nearest_task(self, nearest_task):
@@ -104,7 +106,6 @@ class CPUScheduler(ABC):
         nearest_task: int,
             The task number associated to the nearest task
         """
-        pass
 
     @abstractmethod
     def _insert_interrupting_task(self, interrupting_task):
@@ -116,21 +117,18 @@ class CPUScheduler(ABC):
         interrupting_task: int
             The task number associated to the interrupting task
         """
-        pass
 
     @abstractmethod
     def _initialize_ready_queue(self):
         """
         Initiliazed the ready queue.
         """
-        pass
 
     @abstractmethod
     def _check_schedulability(self):
         """
         Checking the schedulability and updating dict info returned by self.compute
         """
-        pass
 
     def _break_priority_tie(self, min_loc: np.ndarray) -> np.ndarray:
         """
@@ -351,8 +349,7 @@ class CPUScheduler(ABC):
                                            running_remain_exec])
                     else:
                         self.inv_counter[task_num] += 1
-
-                    
+                   
                     # storing the execution of running task before interruption
                     if current_time != interrupting_release:
                         temp_results = [task_num, current_time,
@@ -364,9 +361,7 @@ class CPUScheduler(ABC):
                     if deadline_missed:
                         break
 
-        return self.computed_results, self.dict_info
-
-    
+        return self.computed_results, self.dict_info  
 
 
 class CycleEDF(CPUScheduler):
@@ -738,14 +733,19 @@ class FCFS():
         A 1d array of shape (num_task,) that contains worst case execution 
         time for each task
 
+    deadline: Optional[np.ndarray], default=None
+        A 1d array of shape (num_task,) that contains rhe deadlines of the tasks. 
+        If none it is each deadline is set to np.inf.
+
     ToDo
     --------
     -Need to identify the deadlines and return with dictionary [extra feature]
 
     """
-
-    def __init__(self, release_time: np.ndarray, wc_exec_time: np.ndarray, deadlines: Optional[np.ndarray] = None):
-        # def __init__(self,release_time: np.ndarray, wc_exec_time: np.ndarray):
+    def __init__(self, 
+                 release_time: np.ndarray, 
+                 wc_exec_time: np.ndarray, 
+                 deadlines: Optional[np.ndarray] = None):
         self.release_time = release_time
         self.wc_exec_time = wc_exec_time
         if deadlines is None:
