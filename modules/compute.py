@@ -294,12 +294,10 @@ class CycleEDF(CPUScheduler):
         """
         utilization = sum(self.wc_exec_time/self.periods)
         utilization_bound = 1
-        if utilization<=utilization_bound:
-            result="yes"
-        else:
-            result="no"
+        if utilization>utilization_bound:
+            self.dict_info['warning']='The sum of utilization of worst case execution time of all tasks >= 1'
         
-        self.dict_info['schedulability']=result
+        
 
     def _compute_frequency(self,inv_exec_t,task_num):
         """
