@@ -53,6 +53,9 @@ shutdown_confirmed = threading.Event()
 
 t_master_show_warning = threading.Event()
 
+t_shutdown_pause = threading.Event()
+
+
 #-------------------------------------
     # Misc. Initialisation
 #-------------------------------------
@@ -801,6 +804,8 @@ def show_shutdown_ui(show_popup, confirm_string):
         
     else:
         
+        print('hid the shutdown U/I')
+        
         blur_block.visible = False  
         popup_shutdown.visible = False
         button_shutdown_no.visible = False
@@ -819,7 +824,7 @@ def shutdown():
 # the master thread will be the thread that contains the dynamics of the simulator
 # inside it is where we'll have calls to the scheduling functions that have been made (and possibly other functions)
 # server callbacks will cause U/I changes on the fly
-def master_thread(button_run_pressed, t_master_show_warning, button_warning_pressed):
+def master_thread(button_run_pressed, t_master_show_warning, button_warning_pressed, t_shutdown_pause):
 
     # main_thread is the one thread that all the code lives within
     # bokeh servers will need independent threads to run properly, and opens the avenue for user-friendliness
@@ -867,13 +872,16 @@ def master_thread(button_run_pressed, t_master_show_warning, button_warning_pres
             app_doc.add_next_tick_callback(partial(show_shutdown_ui, 1, "warning"))
             t_master_show_warning.clear()
             
+            t_shutdown_pause.set()
+            
         # if the warning is to be cleared, clear the U/I
         elif button_warning_pressed.wait(0.01) and not t_master_show_warning.is_set():
             
             app_doc.add_next_tick_callback(partial(hide_warning_UI))
             
             button_warning_pressed.clear()
-        
+            
+            t_shutdown_pause.clear()
 
     # the code below will run once the user has decided to shutdown the simulator, which will kill main_thread & all other threads
     # this is only possible with the while loop structure above (and after adding a "shutdown" button)
@@ -882,7 +890,7 @@ def master_thread(button_run_pressed, t_master_show_warning, button_warning_pres
 
 
 # a shutdown thread, for U/I responsiveness that isn't affected by the master thread
-def shutdown_thread(button_shutdown_pressed, shutdown_confirmed):
+def shutdown_thread(button_shutdown_pressed, shutdown_confirmed, t_shutdown_pause):
 
     while threading.main_thread().is_alive():
         
@@ -902,7 +910,12 @@ def shutdown_thread(button_shutdown_pressed, shutdown_confirmed):
                 # for this reason, there must be a server callback that calls "sys.exit()" for a synchronised shutdown between Bokeh & the threads (via "threading.main_thread.is_alive()" )
                 app_doc.add_next_tick_callback(partial(shutdown))
             
+        # only hide the blur when the master thread isn't intentionally blurring
+        elif not button_shutdown_pressed.is_set() and not t_shutdown_pause.is_set():
             
+            app_doc.add_next_tick_callback(partial(show_shutdown_ui, 0, ""))
+
+        
     print(f'[SHUTDOWN] [ {datetime.now()} ] Simulator shutting down... \n')
 
 
@@ -935,8 +948,8 @@ app_doc.add_root(my_layout)
 # may or may not need to set some thread events here
 
 # preparing the threads, passing over relevant thread arguments
-t1 = threading.Thread( target = master_thread, args = (button_run_pressed, t_master_show_warning, button_warning_pressed) )
-t2 = threading.Thread( target = shutdown_thread, args = (button_shutdown_pressed, shutdown_confirmed))
+t1 = threading.Thread( target = master_thread, args = (button_run_pressed, t_master_show_warning, button_warning_pressed, t_shutdown_pause) )
+t2 = threading.Thread( target = shutdown_thread, args = (button_shutdown_pressed, shutdown_confirmed, t_shutdown_pause))
 
 t2.start()
 t1.start()
