@@ -99,6 +99,7 @@ margin_label_period = (-300,-20,60,197)
 margin_label_exec_time = (-250,10,40,167)
 margin_label_end_time = (-265,10,40,110)
 margin_label_schedulability_test = (50,0,0,320)
+margin_label_task_history = (0,0,0,20)
 
 margin_display_release_time = (-301,0,0,0)
 margin_display_period = (-301,0,0,-36)
@@ -111,12 +112,12 @@ margin_button_add_task = (-100,0,0,100)
 margin_button_clear_tasks = (-100,0,0,130)
 margin_button_run = (75,0,0,650)
 margin_button_show_shutdown = (-100,0,0,150)
-margin_button_shutdown_no = (-170,0,0,-300)
-margin_button_shutdown_yes = (-170,0,0,100)
+margin_button_shutdown_no = (-260,0,0,-300)
+margin_button_shutdown_yes = (-260,0,0,100)
 margin_button_warning = (-220,0,0,-220)
 
 margin_blur_block = (0,0,-1300,-500)
-margin_popup_shutdown = (-200,0,0,559)
+margin_popup_shutdown = (-290,0,0,200)
 
 margin_background_UI = (-440,0,0,20)
 margin_popup_warning = (-290,0,0,200)
@@ -306,11 +307,14 @@ label_schedulability_test = Div(
 )
 
 label_task_history = Div(
-    text = "<b>Configured Tasks: </b>",
-    width=215,
+    text =  f"""    Task 1: (1,4) <br>
+                    Task 2: (7,1) <br>
+                    Task 3: (9,4) <br>
+            """,
+    width=800,
     height=30,
     visible = False,
-    margin = margin_label_schedulability_test,
+    margin = margin_label_task_history,
     styles = style_labels,
 )
 
@@ -541,6 +545,7 @@ def show_options(attr, old, new):
     label_task_count.visible = True
     button_run.visible = True
     
+    label_task_history.text = ''
 
     if (new == 'FCFS') and (old == 'RM'):
         print('Went to FCFS from RM')
@@ -612,6 +617,7 @@ def show_options(attr, old, new):
         display_exec_time.visible = True
         display_period.visible = True
         display_end_time.visible = True
+
         
     if (new == 'CC EDF') and (old == 'FCFS'):
         print('Went to RM from FCFS')
@@ -657,7 +663,7 @@ button_dropdown_algo.on_change("value", show_options)
 def collect_task():
 
     global count_task
-    
+
     # the value of the dropdown button will dictate what task info to collect
     if button_dropdown_algo.value == 'FCFS':
 
@@ -711,6 +717,8 @@ def clear_tasks():
     count_task = 1
     label_task_count.text = f"""<u>Task {count_task}:</u>"""
     
+    label_task_history.text = ''
+
     if button_dropdown_algo.value == 'FCFS':
         
         FCFS_release_time.clear()
@@ -797,13 +805,43 @@ def show_schedulability(dict_info):
 
     elif schedulability_string == 'maybe':
 
-        label_schedulability_test.text = f"""<b>Schedulable:</b> {schedulability_string} <br> 
-                                            <b>Missed Task Deadline:</b> {dict_info['missed_task_num']} <br>
-                                            <b>Time Of Deadline Miss:</b> {dict_info['miss_occurance']}"""
+        label_schedulability_test.text = f"""<b><u>Schedulable:</u></b> {schedulability_string} <br> 
+                                            <b><u>Missed Task Deadline:</u></b> {dict_info['missed_task_num']} <br>
+                                            <b><u>Time Of Deadline Miss:</u></b> {dict_info['miss_occurance']}"""
 
     label_schedulability_test.visible = True
 
 
+# shows the task history after configuration
+def show_task_history():
+
+    history = ''
+
+    # if it's FCFS, build the history for FCFS
+    if button_dropdown_algo.value == 'FCFS':
+
+        history =   f""" <b><u>Configured Tasks: {button_dropdown_algo.value}</u></b> <br> 
+                        <b><u>Syntax:</u></b> (Release, W.C Exec Time) <br>
+                        <br>
+                    """
+
+        for i in range(len(FCFS_release_time)):
+            
+            history += f"""<b><u>Task {i+1}</b></u>: ({FCFS_release_time[i]}, {FCFS_wc_exec_time[i]}) <br>"""
+
+    elif button_dropdown_algo.value == 'RM':
+
+        history =   f""" <b><u>Configured Tasks: {button_dropdown_algo.value}</u></b> <br> 
+                        <b><u>Syntax:</u></b> (Period, Exec Time) <br>
+                        <br>
+                    """
+
+        for i in range(len(RM_exec_time)):
+            
+            history += f"""<b><u>Task {i+1}</b></u>: ({RM_period[i]}, {RM_exec_time[i]}) <br>"""
+        
+    label_task_history.text = history
+    label_task_history.visible = True
 
 # hides the warning message, warning button & blur block
 def hide_warning_UI():
@@ -939,11 +977,13 @@ def master_thread(button_run_pressed, t_master_warning_RM_config, button_warning
                 
             results, dict_info = cpu_scheduling_compute(task_info)
 
+            # after a valid task configuration, show the task history
+            app_doc.add_next_tick_callback(partial(show_task_history))
+
             # getting schedulability for RM
             if button_dropdown_algo.value == 'RM':
 
                 app_doc.add_next_tick_callback(partial(show_schedulability, dict_info))
-                label_schedulability_test
 
             # the callback will repeatedly add bars for each task
             for row in results:
@@ -956,6 +996,7 @@ def master_thread(button_run_pressed, t_master_warning_RM_config, button_warning
                 
                 app_doc.add_next_tick_callback(partial(show_task_result, task_x_coord, task_width, frequency, label, task_count))
             
+
             button_run_pressed.clear()
         
         # one-shot to display the warning U/I for the RM period time < RM exec time
@@ -1026,7 +1067,8 @@ my_layout = layout (  [
                         [button_add_task, button_clear_tasks, button_show_shutdown],
                         [popup_shutdown, button_shutdown_no, button_shutdown_yes],
                         [popup_warning, button_warning],
-                        [background_UI, label_schedulability_test, label_task_history]
+                        [background_UI, ],
+                        [label_task_history, label_schedulability_test]
                       ]
                    )
 
