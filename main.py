@@ -98,7 +98,7 @@ margin_label_invocation2 = (-150,0,0,300)
 margin_label_invocation3 = (-150,0,0,500)
 margin_label_period = (-300,-20,60,197)
 margin_label_exec_time = (-250,10,40,167)
-margin_label_end_time = (-200,10,40,173)
+margin_label_end_time = (-265,10,40,420)
 
 margin_display_release_time = (-301,0,0,0)
 margin_display_period = (-301,0,0,-36)
@@ -108,7 +108,7 @@ margin_display_exec_time = (-251,0,0,-127)
 margin_display_invocation1 = (-150,0,0,-110)
 margin_display_invocation2 = (-150,0,0,-110)
 margin_display_invocation3 = (-150,0,0,-110)
-margin_display_end_time = (-200,0,0,-132)
+margin_display_end_time = (-268,0,0,-140)
 
 
 margin_button_add_task = (-30,0,0,100)
