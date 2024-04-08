@@ -737,7 +737,6 @@ button_shutdown_yes.on_event(ButtonClick,trigger_shutdown)
 def hide_warning():
     
     button_warning_pressed.set()
-    t_master_show_warning.set()
 button_warning.on_event(ButtonClick,hide_warning)
 
 #-------------------------------------
@@ -862,14 +861,14 @@ def master_thread(button_run_pressed, t_master_show_warning, button_warning_pres
             
             button_run_pressed.clear()
         
-        # one-shot to display the warning U/I
-        elif t_master_show_warning.wait(0.01):
+        # one-shot to display the warning U/I, if it's not been cleared
+        elif t_master_show_warning.wait(0.005) and not button_warning_pressed.wait(0.005):
             
             app_doc.add_next_tick_callback(partial(show_shutdown_ui, 1, "warning"))
             t_master_show_warning.clear()
             
         # if the warning is to be cleared, clear the U/I
-        elif button_warning_pressed.wait(0.01):
+        elif button_warning_pressed.wait(0.01) and not t_master_show_warning.is_set():
             
             app_doc.add_next_tick_callback(partial(hide_warning_UI))
             
