@@ -45,9 +45,13 @@ button_run_pressed = threading.Event()
 # to let the shutdown thread show the shutdown popup
 button_shutdown_pressed = threading.Event()
 
+# clears the blur, warning message & warning button
+button_warning_pressed = threading.Event()
+
 # to notify that the simulator has shutdown
 shutdown_confirmed = threading.Event()
 
+t_master_show_warning = threading.Event()
 
 #-------------------------------------
     # Misc. Initialisation
@@ -99,18 +103,19 @@ margin_display_invocation = (-201,0,0,-97)
 margin_display_exec_time = (-251,0,0,-127)
 margin_display_end_time = (-270,0,0,-127)
 
-
 margin_button_add_task = (-100,0,0,100)
 margin_button_clear_tasks = (-100,0,0,130)
 margin_button_run = (75,0,0,650)
 margin_button_show_shutdown = (-100,0,0,150)
 margin_button_shutdown_no = (-170,0,0,-300)
 margin_button_shutdown_yes = (-170,0,0,100)
+margin_button_warning = (-220,0,0,-220)
 
 margin_blur_block = (0,0,-1300,-500)
 margin_popup_shutdown = (-200,0,0,559)
 
 margin_background_UI = (-440,0,0,20)
+margin_popup_warning = (-290,0,0,200)
 
 #-------------------------------------
     # Styles
@@ -192,6 +197,23 @@ style_button_shutdown = {
                                         'padding-top':'10px'
                     }
 
+style_popup_warning = {
+                                        'position':'relative',
+                                        'font-size':'15px',
+                                        'z-index':'9',
+                                        'background-color': '#DDDDDD',
+                                        'border-radius':'5px 8px',
+                                        'text-align':'center',
+                                        'padding-top':'10px'
+                        }
+                        
+style_button_warning = {
+                                        'position':'relative',
+                                        'font-size':'15px',
+                                        'z-index':'10',
+                                        'text-align':'center',
+                                        'padding-top':'10px'
+                    }                      
 #-------------------------------------
     # Labels
 #-------------------------------------
@@ -385,6 +407,14 @@ popup_shutdown = Div(
     margin = margin_popup_shutdown,
 )
 
+popup_warning = Div(
+    text =  """ Error: Invalid Task Configuration.<br> Execution Time Above Period Time """,
+    width=400,
+    height=130,
+    visible = False,
+    styles = style_popup_warning,
+    margin = margin_popup_warning,
+)
 
 #-------------------------------------
             # Buttons  
@@ -461,6 +491,15 @@ button_shutdown_yes =  Button(
     styles = style_button_shutdown,
 )
 
+button_warning =  Button(
+    label = "Ok",
+    width=45,
+    height = 45,
+    button_type = 'primary',
+    visible = False,
+    margin = margin_button_warning,
+    styles = style_button_warning,
+)
 
 #-------------------------------------
             # Button Callbacks   
@@ -619,6 +658,14 @@ def collect_task():
         print(f'Invocations (CC EDF): {CC_EDF_invocation}')
 
     elif button_dropdown_algo.value == 'RM':
+        
+        # invalid task configuration
+        if display_exec_time.value > display_period.value:
+            
+            t_master_show_warning.set()
+            print(f'blur block visible: {blur_block.visible}')
+            return;
+            
         RM_period.append(display_period.value)
         RM_exec_time.append(display_exec_time.value)
         display_period.value = 0
@@ -687,6 +734,12 @@ def trigger_shutdown():
 button_shutdown_yes.on_event(ButtonClick,trigger_shutdown) 
 
 
+def hide_warning():
+    
+    button_warning_pressed.set()
+    t_master_show_warning.set()
+button_warning.on_event(ButtonClick,hide_warning)
+
 #-------------------------------------
     # Master Thread Callbacks
 #-------------------------------------
@@ -709,6 +762,14 @@ def show_task_result(task_x_coord, task_width, frequency, label, task_count):
     print('done displaying')
 
 
+# hides the warning message, warning button & blur block
+def hide_warning_UI():
+
+    button_warning.visible = False
+    popup_warning.visible = False
+    blur_block.visible = False
+    
+    
 #-------------------------------------
     # Shutdown Thread Callbacks
 #-------------------------------------
@@ -719,8 +780,15 @@ def show_task_result(task_x_coord, task_width, frequency, label, task_count):
 def show_shutdown_ui(show_popup, confirm_string):
     
     if show_popup:
-    
+        
         blur_block.visible = True
+        
+        if confirm_string == "warning":
+            
+            popup_warning.visible = True
+            button_warning.visible = True
+            return;
+            
         popup_shutdown.visible = True
         button_shutdown_no.visible = True
         button_shutdown_yes.visible = True
@@ -730,7 +798,8 @@ def show_shutdown_ui(show_popup, confirm_string):
             popup_shutdown.text = """ <b>Simulator has stopped</b> """
             button_shutdown_no.visible = False
             button_shutdown_yes.visible = False
-            
+        
+        
     else:
         
         blur_block.visible = False  
@@ -751,7 +820,7 @@ def shutdown():
 # the master thread will be the thread that contains the dynamics of the simulator
 # inside it is where we'll have calls to the scheduling functions that have been made (and possibly other functions)
 # server callbacks will cause U/I changes on the fly
-def master_thread(button_run_pressed):
+def master_thread(button_run_pressed, t_master_show_warning, button_warning_pressed):
 
     # main_thread is the one thread that all the code lives within
     # bokeh servers will need independent threads to run properly, and opens the avenue for user-friendliness
@@ -792,7 +861,20 @@ def master_thread(button_run_pressed):
                 app_doc.add_next_tick_callback(partial(show_task_result, task_x_coord, task_width, frequency, label, task_count))
             
             button_run_pressed.clear()
-
+        
+        # one-shot to display the warning U/I
+        elif t_master_show_warning.wait(0.01):
+            
+            app_doc.add_next_tick_callback(partial(show_shutdown_ui, 1, "warning"))
+            t_master_show_warning.clear()
+            
+        # if the warning is to be cleared, clear the U/I
+        elif button_warning_pressed.wait(0.01):
+            
+            app_doc.add_next_tick_callback(partial(hide_warning_UI))
+            
+            button_warning_pressed.clear()
+        
 
     # the code below will run once the user has decided to shutdown the simulator, which will kill main_thread & all other threads
     # this is only possible with the while loop structure above (and after adding a "shutdown" button)
@@ -820,10 +902,7 @@ def shutdown_thread(button_shutdown_pressed, shutdown_confirmed):
                 # when a child thread calls "sys.exit()", the threads will end but the bokeh server will still be running
                 # for this reason, there must be a server callback that calls "sys.exit()" for a synchronised shutdown between Bokeh & the threads (via "threading.main_thread.is_alive()" )
                 app_doc.add_next_tick_callback(partial(shutdown))
-                
-        else:
             
-            app_doc.add_next_tick_callback(partial(show_shutdown_ui, 0, ""))
             
     print(f'[SHUTDOWN] [ {datetime.now()} ] Simulator shutting down... \n')
 
@@ -842,6 +921,7 @@ my_layout = layout (  [
                         [label_invocation, display_invocation],
                         [button_add_task, button_clear_tasks, button_show_shutdown],
                         [popup_shutdown, button_shutdown_no, button_shutdown_yes],
+                        [popup_warning, button_warning],
                         [background_UI]
                       ]
                    )
@@ -856,7 +936,7 @@ app_doc.add_root(my_layout)
 # may or may not need to set some thread events here
 
 # preparing the threads, passing over relevant thread arguments
-t1 = threading.Thread( target = master_thread, args = (button_run_pressed,) )
+t1 = threading.Thread( target = master_thread, args = (button_run_pressed, t_master_show_warning, button_warning_pressed) )
 t2 = threading.Thread( target = shutdown_thread, args = (button_shutdown_pressed, shutdown_confirmed))
 
 t2.start()
