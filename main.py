@@ -51,7 +51,7 @@ button_warning_pressed = threading.Event()
 # to notify that the simulator has shutdown
 shutdown_confirmed = threading.Event()
 
-t_master_show_warning = threading.Event()
+t_master_warning_RM_config = threading.Event()
 
 t_shutdown_pause = threading.Event()
 
@@ -411,7 +411,7 @@ popup_shutdown = Div(
 )
 
 popup_warning = Div(
-    text =  """ Error: Invalid Task Configuration.<br> Execution Time Above Period Time """,
+    text =  """Error: Invalid Task Configuration.<br> Execution Time Above Period Time""",
     width=400,
     height=130,
     visible = False,
@@ -662,11 +662,10 @@ def collect_task():
 
     elif button_dropdown_algo.value == 'RM':
         
-        # invalid task configuration
+        # invalid task configuration, period below exec time
         if display_exec_time.value > display_period.value:
             
-            t_master_show_warning.set()
-            print(f'blur block visible: {blur_block.visible}')
+            t_master_warning_RM_config.set()
             return;
             
         RM_period.append(display_period.value)
@@ -785,16 +784,27 @@ def show_shutdown_ui(show_popup, confirm_string):
         
         blur_block.visible = True
         
-        if confirm_string == "warning":
+        if confirm_string == "prepare_end":
             
+            popup_shutdown.visible = True
+            button_shutdown_no.visible = True
+            button_shutdown_yes.visible = True
+            return;
+        
+        elif confirm_string == "warning_RM_config":
+            
+            popup_warning.text = """Error: Invalid Task Configuration.<br> Execution Time Above Period Time"""
+            popup_warning.visible = True
+            button_warning.visible = True
+            return;
+        
+        elif confirm_string == "warning_RM_end":
+            
+            popup_warning.text = """Error: Invalid Task Configuration.<br> End Time Is 0"""
             popup_warning.visible = True
             button_warning.visible = True
             return;
             
-        popup_shutdown.visible = True
-        button_shutdown_no.visible = True
-        button_shutdown_yes.visible = True
-        
         if confirm_string == "end":
             
             popup_shutdown.text = """ <b>Simulator has stopped</b> """
@@ -822,7 +832,7 @@ def shutdown():
 # the master thread will be the thread that contains the dynamics of the simulator
 # inside it is where we'll have calls to the scheduling functions that have been made (and possibly other functions)
 # server callbacks will cause U/I changes on the fly
-def master_thread(button_run_pressed, t_master_show_warning, button_warning_pressed, t_shutdown_pause):
+def master_thread(button_run_pressed, t_master_warning_RM_config, button_warning_pressed, t_shutdown_pause):
 
     # main_thread is the one thread that all the code lives within
     # bokeh servers will need independent threads to run properly, and opens the avenue for user-friendliness
@@ -843,12 +853,31 @@ def master_thread(button_run_pressed, t_master_show_warning, button_warning_pres
             
             elif button_dropdown_algo.value == 'RM':
                 
+                if display_end_time.value == 0:
+                    
+                    app_doc.add_next_tick_callback(partial(show_shutdown_ui, 1, "warning_RM_end"))
+                    t_shutdown_pause.set()
+                    button_run_pressed.clear()
+                    
+                    # wait for confirmation of error
+                    button_warning_pressed.wait()
+                    
+                    # now return the U/I
+                    t_shutdown_pause.clear()
+                    continue;
+                
                 task_info = {   "scheduling_algo":'rate_monotonic',
                                 'periods':np.array(RM_period),
                                 'wc_exec_time':np.array(RM_exec_time),
                                 'end_time':display_end_time.value
                             }
-
+                
+            # if the user has not configured any tasks, Run does nothing and gives a warning
+            if (button_dropdown_algo.value == 'FCFS' and len(FCFS_release_time) == 0) or (button_dropdown_algo.value == 'RM' and len(RM_period) == 0) or (button_dropdown_algo.value == 'CC EDF' and len(CC_EDF_wc_exec_time) == 0):
+                
+                button_run_pressed.clear()
+                continue;
+                
             results, dict_info = cpu_scheduling_compute(task_info)
 
             # the callback will repeatedly add bars for each task
@@ -864,16 +893,16 @@ def master_thread(button_run_pressed, t_master_show_warning, button_warning_pres
             
             button_run_pressed.clear()
         
-        # one-shot to display the warning U/I, if it's not been cleared
-        elif t_master_show_warning.wait(0.005) and not button_warning_pressed.wait(0.005):
+        # one-shot to display the warning U/I for the RM period time < RM exec time
+        elif t_master_warning_RM_config.wait(0.005) and not button_warning_pressed.wait(0.005):
             
-            app_doc.add_next_tick_callback(partial(show_shutdown_ui, 1, "warning"))
-            t_master_show_warning.clear()
+            app_doc.add_next_tick_callback(partial(show_shutdown_ui, 1, "warning_RM_config"))
+            t_master_warning_RM_config.clear()
             
             t_shutdown_pause.set()
             
         # if the warning is to be cleared, clear the U/I
-        elif button_warning_pressed.wait(0.01) and not t_master_show_warning.is_set():
+        elif button_warning_pressed.wait(0.01) and not t_master_warning_RM_config.is_set():
             
             app_doc.add_next_tick_callback(partial(hide_warning_UI))
             
@@ -898,7 +927,7 @@ def shutdown_thread(button_shutdown_pressed, shutdown_confirmed, t_shutdown_paus
         if button_shutdown_pressed.is_set():
             
             # allow the user to confirm a shutdown
-            app_doc.add_next_tick_callback(partial(show_shutdown_ui, 1, ""))
+            app_doc.add_next_tick_callback(partial(show_shutdown_ui, 1, "prepare_end"))
         
             if shutdown_confirmed.is_set():
                 
@@ -946,7 +975,7 @@ app_doc.add_root(my_layout)
 # may or may not need to set some thread events here
 
 # preparing the threads, passing over relevant thread arguments
-t1 = threading.Thread( target = master_thread, args = (button_run_pressed, t_master_show_warning, button_warning_pressed, t_shutdown_pause) )
+t1 = threading.Thread( target = master_thread, args = (button_run_pressed, t_master_warning_RM_config, button_warning_pressed, t_shutdown_pause) )
 t2 = threading.Thread( target = shutdown_thread, args = (button_shutdown_pressed, shutdown_confirmed, t_shutdown_pause))
 
 t2.start()
