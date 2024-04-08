@@ -803,9 +803,7 @@ def show_shutdown_ui(show_popup, confirm_string):
         
         
     else:
-        
-        print('hid the shutdown U/I')
-        
+
         blur_block.visible = False  
         popup_shutdown.visible = False
         button_shutdown_no.visible = False
