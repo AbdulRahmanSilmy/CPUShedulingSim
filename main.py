@@ -90,18 +90,20 @@ margin_label_wc_exec_time = (-250,10,40,40)
 margin_label_invocation = (-200,-20,60,167)
 margin_label_period = (-300,-20,60,197)
 margin_label_exec_time = (-250,10,40,167)
+margin_label_end_time = (-265,10,40,110)
 
 margin_display_release_time = (-301,0,0,0)
 margin_display_period = (-301,0,0,-36)
 margin_display_wc_exec_time = (-251,0,0,0)
 margin_display_invocation = (-201,0,0,-97)
 margin_display_exec_time = (-251,0,0,-127)
+margin_display_end_time = (-270,0,0,-127)
 
 
-margin_button_add_task = (-160,0,0,100)
-margin_button_clear_tasks = (-160,0,0,100)
+margin_button_add_task = (-100,0,0,100)
+margin_button_clear_tasks = (-100,0,0,130)
 margin_button_run = (75,0,0,650)
-margin_button_show_shutdown = (-160,0,0,150)
+margin_button_show_shutdown = (-100,0,0,150)
 margin_button_shutdown_no = (-170,0,0,-300)
 margin_button_shutdown_yes = (-170,0,0,100)
 
@@ -259,6 +261,15 @@ label_exec_time = Div(
     styles = style_labels,
 )
 
+label_end_time = Div(
+    text = "<b>End Time:</b>",
+    width=215,
+    height=30,
+    visible = False,
+    margin = margin_label_end_time,
+    styles = style_labels,
+)
+
 #-------------------------------------
     # Displays
 #-------------------------------------
@@ -321,6 +332,17 @@ display_exec_time = NumericInput(
     margin = margin_display_exec_time,
 )
 
+display_end_time = NumericInput(
+    mode = 'int',
+    value = 0,
+    low = 0,
+    width=65,
+    height = 25,
+    styles = style_displays,
+    visible = False,
+    margin = margin_display_end_time,
+)
+
 #-------------------------------------
     # Miscellaneous U/I
 #-------------------------------------
@@ -339,7 +361,7 @@ figure_results = figure(
 
 background_UI = Div(
     width=760,
-    height=360,
+    height=420,
     visible = True,
     styles = style_background_UI,
     margin = margin_background_UI,
@@ -457,14 +479,15 @@ def show_options(attr, old, new):
     label_task_count.visible = True
     button_run.visible = True
     
-    # TODO - let this condition also handle transitions from the other algo options, to FCFS
+
     if (new == 'FCFS') and (old == 'RM'):
         print('Went to FCFS from RM')
         RM_exec_time.clear()
         RM_period.clear()
-
+        display_end_time.value = 0
+        
     elif (new == 'FCFS') and (old == 'CC EDF'):
-        print('Went from CC EDF to RM')
+        print('Went from CC EDF to FCFS')
         CC_EDF_wc_exec_time.clear()
         CC_EDF_period.clear()
         CC_EDF_invocation.clear()
@@ -475,21 +498,22 @@ def show_options(attr, old, new):
         
         # invisible the others, show the U/I for release time, w.c exec time, add new task, clear task, run
         print('You chose FCFS')
-
-        label_task_count.visible = True
-        label_release_time.visible = True
-        label_wc_exec_time.visible = True
+        
         label_period.visible = False
         label_exec_time.visible = False
         label_invocation.visible = False
-        display_release_time.visible = True
-        display_wc_exec_time.visible = True
+        label_end_time.visible = False
+        
         display_period.visible = False  # Hide the period input field
         display_invocation.visible = False
         display_exec_time.visible = False
+        display_end_time.visible = False
         
-        count_task = 1
-        label_task_count.text = f"""<u>Task {count_task}:</u>"""
+        label_release_time.visible = True
+        label_wc_exec_time.visible = True
+        
+        display_release_time.visible = True
+        display_wc_exec_time.visible = True
 
 
     # TODO - let this condition also handle transitions from the other algo options, to RM
@@ -510,20 +534,21 @@ def show_options(attr, old, new):
         
         print('You chose RM')
         
-        label_task_count.visible = True
-        label_period.visible = True
         label_release_time.visible = False
         label_wc_exec_time.visible = False
         label_invocation.visible = False
-        label_exec_time.visible = True
-        display_period.visible = True
+        
         display_release_time.visible = False
         display_wc_exec_time.visible = False
         display_invocation.visible = False
+        
+        label_period.visible = True
+        label_exec_time.visible = True
+        label_end_time.visible = True
+        
         display_exec_time.visible = True
-
-        count_task = 1
-        label_task_count.text = f"""<u>Task {count_task}:</u>"""
+        display_period.visible = True
+        display_end_time.visible = True
 
     if (new == 'CC EDF') and (old == 'FCFS'):
         print('Went to RM from FCFS')
@@ -534,28 +559,33 @@ def show_options(attr, old, new):
         print('Went to RM from CC EDF')
         RM_exec_time.clear()
         RM_period.clear()
-
+        display_end_time.value = 0
+        
     if new == 'CC EDF':
 
         # TODO - clear the lists that the other algorithms use here
 
         print("You chose CC EDF")
-
-        label_task_count.visible = True
+        
+        label_exec_time.visible = False
+        label_release_time.visible = False
+        label_end_time.visible = False
+        
+        display_release_time.visible = False    # Hide the release time input 
+        display_exec_time.visible = False
+        display_end_time.visible = False
+        
         label_period.visible = True
         label_wc_exec_time.visible = True
-        label_exec_time.visible = False
         label_invocation.visible = True
-        label_release_time.visible = False
+        
         display_period.visible = True
         display_wc_exec_time.visible = True
         display_invocation.visible = True
-        display_release_time.visible = False    # Hide the release time input 
-        display_exec_time.visible = False
 
-        count_task = 1
-        label_task_count.text = f"""<u>Task {count_task}:</u>"""
-
+    
+    count_task = 1
+    label_task_count.text = f"""<u>Task {count_task}:</u>"""
 
 button_dropdown_algo.on_change("value", show_options)
 
@@ -593,7 +623,7 @@ def collect_task():
         RM_exec_time.append(display_exec_time.value)
         display_period.value = 0
         display_exec_time.value = 0
-
+        
         print(f'Periods (RM): {RM_period}')  
         print(f'W.C Ex. times (RM): {RM_exec_time}')
     
@@ -669,7 +699,7 @@ button_shutdown_yes.on_event(ButtonClick,trigger_shutdown)
 def show_task_result(task_x_coord, task_width, frequency, label, task_count):
     
     # TODO - make it possible to use distinct colours for any number of tasks
-    plot_colors=['blue','green','red','pink','orange','yellow']
+    plot_colors=['blue','green','red','pink','orange','yellow', 'purple', 'grey']
     
     figure_results.vbar(x = task_x_coord, width = task_width, top = frequency, fill_color = plot_colors[task_count])
     figure_results.y_range.start = 0
@@ -753,7 +783,28 @@ def master_thread(button_run_pressed):
                     task_count = int(row[0])
                     
                     app_doc.add_next_tick_callback(partial(show_task_result, task_x_coord, task_width, frequency, label, task_count))
+            
+            elif button_dropdown_algo.value == 'RM':
+                
+                task_info = {   "scheduling_algo":'rate_monotonic',
+                                'periods':np.array(RM_period),
+                                'wc_exec_time':np.array(RM_exec_time),
+                                'end_time':display_end_time.value
+                            }
 
+                results, dict_info = cpu_scheduling_compute(task_info)
+
+                # the callback will repeatedly add bars for each task
+                for row in results:
+
+                    task_x_coord = np.mean(row[1:3])
+                    task_width = row[2] - row[1]
+                    frequency = row[3]
+                    label = f'Task {int(row[0])+1}'
+                    task_count = int(row[0])
+                    
+                    app_doc.add_next_tick_callback(partial(show_task_result, task_x_coord, task_width, frequency, label, task_count))
+            
             button_run_pressed.clear()
 
 
@@ -799,7 +850,7 @@ my_layout = layout (  [
                         [button_run, figure_results],                       
                         [label_task_count],
                         [label_period, display_period],
-                        [label_exec_time, display_exec_time],
+                        [label_exec_time, display_exec_time, label_end_time, display_end_time],
                         [label_release_time, display_release_time],
                         [label_wc_exec_time, display_wc_exec_time],
                         [label_invocation, display_invocation],
