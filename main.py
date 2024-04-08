@@ -98,6 +98,7 @@ margin_label_invocation = (-200,-20,60,167)
 margin_label_period = (-300,-20,60,197)
 margin_label_exec_time = (-250,10,40,167)
 margin_label_end_time = (-265,10,40,110)
+margin_label_schedulability_test = (50,0,0,320)
 
 margin_display_release_time = (-301,0,0,0)
 margin_display_period = (-301,0,0,-36)
@@ -294,6 +295,25 @@ label_end_time = Div(
     margin = margin_label_end_time,
     styles = style_labels,
 )
+
+label_schedulability_test = Div(
+    text = "<b>Schedulable: </b>",
+    width=215,
+    height=30,
+    visible = False,
+    margin = margin_label_schedulability_test,
+    styles = style_labels,
+)
+
+label_task_history = Div(
+    text = "<b>Configured Tasks: </b>",
+    width=215,
+    height=30,
+    visible = False,
+    margin = margin_label_schedulability_test,
+    styles = style_labels,
+)
+
 
 #-------------------------------------
     # Displays
@@ -545,7 +565,8 @@ def show_options(attr, old, new):
         label_exec_time.visible = False
         label_invocation.visible = False
         label_end_time.visible = False
-        
+        label_schedulability_test.visible = False
+
         display_period.visible = False  # Hide the period input field
         display_invocation.visible = False
         display_exec_time.visible = False
@@ -591,7 +612,7 @@ def show_options(attr, old, new):
         display_exec_time.visible = True
         display_period.visible = True
         display_end_time.visible = True
-
+        
     if (new == 'CC EDF') and (old == 'FCFS'):
         print('Went to RM from FCFS')
         FCFS_release_time.clear()
@@ -612,7 +633,8 @@ def show_options(attr, old, new):
         label_exec_time.visible = False
         label_release_time.visible = False
         label_end_time.visible = False
-        
+        label_schedulability_test.visible = False
+
         display_release_time.visible = False    # Hide the release time input 
         display_exec_time.visible = False
         display_end_time.visible = False
@@ -754,13 +776,33 @@ def show_task_result(task_x_coord, task_width, frequency, label, task_count):
     # TODO - make it possible to use distinct colours for any number of tasks
     plot_colors=['blue','green','red','pink','orange','yellow', 'purple', 'grey']
     
-    figure_results.vbar(x = task_x_coord, width = task_width, top = frequency, fill_color = plot_colors[task_count])
+    figure_results.vbar(x = task_x_coord, width = task_width, top = frequency, fill_color = plot_colors[task_count], legend_label=f'Task {task_count+1}')
     figure_results.y_range.start = 0
     figure_results.xgrid.grid_line_color = None
     figure_results.xaxis.axis_label = "Time"
     figure_results.yaxis.axis_label = "Frequency"
     figure_results.outline_line_color = None
     print('done displaying')
+
+
+# show the schedulability info, for RM
+def show_schedulability(dict_info):
+
+    schedulability_string = dict_info["schedulability"]
+
+    # there won't be missed deadlines, just say yes
+    if schedulability_string == 'yes':
+
+        label_schedulability_test.text = f'<b>Schedulable:</b> {schedulability_string}'
+
+    elif schedulability_string == 'maybe':
+
+        label_schedulability_test.text = f"""<b>Schedulable:</b> {schedulability_string} <br> 
+                                            <b>Missed Task Deadline:</b> {dict_info['missed_task_num']} <br>
+                                            <b>Time Of Deadline Miss:</b> {dict_info['miss_occurance']}"""
+
+    label_schedulability_test.visible = True
+
 
 
 # hides the warning message, warning button & blur block
@@ -804,7 +846,14 @@ def show_shutdown_ui(show_popup, confirm_string):
             popup_warning.visible = True
             button_warning.visible = True
             return;
+    
+        elif confirm_string == "warning_no_tasks":
             
+            popup_warning.text = """Error: Invalid Task Configuration.<br> No Tasks Configured"""
+            popup_warning.visible = True
+            button_warning.visible = True
+            return;
+    
         if confirm_string == "end":
             
             popup_shutdown.text = """ <b>Simulator has stopped</b> """
@@ -823,6 +872,7 @@ def show_shutdown_ui(show_popup, confirm_string):
 def shutdown():
     sys.exit()   
     
+
 #-------------------------------------
     # Threads 
 #-------------------------------------
@@ -855,15 +905,15 @@ def master_thread(button_run_pressed, t_master_warning_RM_config, button_warning
                 
                 if display_end_time.value == 0:
                     
-                    app_doc.add_next_tick_callback(partial(show_shutdown_ui, 1, "warning_RM_end"))
                     t_shutdown_pause.set()
-                    button_run_pressed.clear()
+                    app_doc.add_next_tick_callback(partial(show_shutdown_ui, 1, "warning_RM_end"))
                     
                     # wait for confirmation of error
                     button_warning_pressed.wait()
                     
                     # now return the U/I
                     t_shutdown_pause.clear()
+                    button_run_pressed.clear()
                     continue;
                 
                 task_info = {   "scheduling_algo":'rate_monotonic',
@@ -875,10 +925,25 @@ def master_thread(button_run_pressed, t_master_warning_RM_config, button_warning
             # if the user has not configured any tasks, Run does nothing and gives a warning
             if (button_dropdown_algo.value == 'FCFS' and len(FCFS_release_time) == 0) or (button_dropdown_algo.value == 'RM' and len(RM_period) == 0) or (button_dropdown_algo.value == 'CC EDF' and len(CC_EDF_wc_exec_time) == 0):
                 
+                t_shutdown_pause.set()
+
+                app_doc.add_next_tick_callback(partial(show_shutdown_ui, 1, "warning_no_tasks"))
+                    
+                # wait for confirmation of error
+                button_warning_pressed.wait()
+                    
+                # now return the U/I
+                t_shutdown_pause.clear()
                 button_run_pressed.clear()
                 continue;
                 
             results, dict_info = cpu_scheduling_compute(task_info)
+
+            # getting schedulability for RM
+            if button_dropdown_algo.value == 'RM':
+
+                app_doc.add_next_tick_callback(partial(show_schedulability, dict_info))
+                label_schedulability_test
 
             # the callback will repeatedly add bars for each task
             for row in results:
@@ -961,7 +1026,7 @@ my_layout = layout (  [
                         [button_add_task, button_clear_tasks, button_show_shutdown],
                         [popup_shutdown, button_shutdown_no, button_shutdown_yes],
                         [popup_warning, button_warning],
-                        [background_UI]
+                        [background_UI, label_schedulability_test, label_task_history]
                       ]
                    )
 
