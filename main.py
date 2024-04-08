@@ -633,7 +633,6 @@ button_add_task.on_click(collect_task)
 
 
 # clears the task data collected for a given algorithm
-#TODO - add the clearing option for the other algos
 def clear_tasks():
     
     global count_task
@@ -770,19 +769,6 @@ def master_thread(button_run_pressed):
                                 'release_time':FCFS_release_time,
                                 'wc_exec_time':FCFS_wc_exec_time
                             }
-
-                results, dict_info = cpu_scheduling_compute(task_info)
-
-                # the callback will repeatedly add bars for each task
-                for row in results:
-
-                    task_x_coord = np.mean(row[1:3])
-                    task_width = row[2] - row[1]
-                    frequency = row[3]
-                    label = f'Task {int(row[0])+1}'
-                    task_count = int(row[0])
-                    
-                    app_doc.add_next_tick_callback(partial(show_task_result, task_x_coord, task_width, frequency, label, task_count))
             
             elif button_dropdown_algo.value == 'RM':
                 
@@ -792,18 +778,18 @@ def master_thread(button_run_pressed):
                                 'end_time':display_end_time.value
                             }
 
-                results, dict_info = cpu_scheduling_compute(task_info)
+            results, dict_info = cpu_scheduling_compute(task_info)
 
-                # the callback will repeatedly add bars for each task
-                for row in results:
+            # the callback will repeatedly add bars for each task
+            for row in results:
 
-                    task_x_coord = np.mean(row[1:3])
-                    task_width = row[2] - row[1]
-                    frequency = row[3]
-                    label = f'Task {int(row[0])+1}'
-                    task_count = int(row[0])
-                    
-                    app_doc.add_next_tick_callback(partial(show_task_result, task_x_coord, task_width, frequency, label, task_count))
+                task_x_coord = np.mean(row[1:3])
+                task_width = row[2] - row[1]
+                frequency = row[3]
+                label = f'Task {int(row[0])+1}'
+                task_count = int(row[0])
+                
+                app_doc.add_next_tick_callback(partial(show_task_result, task_x_coord, task_width, frequency, label, task_count))
             
             button_run_pressed.clear()
 
