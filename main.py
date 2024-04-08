@@ -60,12 +60,15 @@ FCFS_wc_exec_time: list[int] = list()
 # front-end list for RM release times
 RM_exec_time: list[int] = list()
 RM_period: list[int] = list()
-RM_exec_time: list[int] = list()
+RM_end_time: list[int] = list()
+
 
 # front-end list for EDF release times
 CC_EDF_wc_exec_time: list[int] = list()
 CC_EDF_period: list[int] = list()
-CC_EDF_invocation: list[int] = list()
+CC_EDF_invocation1: list[int] = list()
+CC_EDF_invocation2: list[int] = list()
+CC_EDF_invocation3: list[int] = list()
 
 # a count for which task the user is configuring
 count_task: int = 1
@@ -584,7 +587,7 @@ def show_options(attr, old, new):
         print('Went from CC EDF to RM')
         CC_EDF_wc_exec_time.clear()
         CC_EDF_period.clear()
-        CC_EDF_invocation.clear()
+        
 
     if new == 'FCFS':
         
@@ -603,13 +606,18 @@ def show_options(attr, old, new):
         label_invocation2.visible = False
         label_invocation3.visible = False
         label_num_invocations.visible = False
+        label_invocation1.visible = False
+        label_invocation2.visible = False
+        label_invocation3.visible = False
+        button_dropdown_invocation.visible = False
         display_release_time.visible = True
         display_wc_exec_time.visible = True
         display_period.visible = False  # Hide the period input field
         display_invocation.visible = False
         display_exec_time.visible = False
         display_end_time.visible = False
-        button_dropdown_invocation.visible = False
+        
+
         
         
         count_task = 1
@@ -626,7 +634,7 @@ def show_options(attr, old, new):
         print('Went to RM from CC EDF')
         CC_EDF_wc_exec_time.clear()
         CC_EDF_period.clear()
-        CC_EDF_invocation.clear()
+       
         
     if new == 'RM':
 
@@ -644,6 +652,9 @@ def show_options(attr, old, new):
         label_exec_time.visible = True
         label_end_time.visible = True
         label_num_invocations.visible = False
+        label_invocation1.visible = False
+        label_invocation2.visible = False
+        label_invocation3.visible = False
         display_period.visible = True
         display_release_time.visible = False
         display_wc_exec_time.visible = False
@@ -729,6 +740,7 @@ def collect_task():
 
     global count_task
     
+    
     # the value of the dropdown button will dictate what task info to collect
     if button_dropdown_algo.value == 'FCFS':
 
@@ -740,27 +752,53 @@ def collect_task():
         print(f'Release times (FCFS): {FCFS_release_time}')
         print(f'W.C Ex. times (FCFS): {FCFS_wc_exec_time}')
 
-    elif button_dropdown_algo.value == 'CC EDF':
-
-        CC_EDF_wc_exec_time.append(display_wc_exec_time.value)
-        CC_EDF_invocation.append(display_invocation.value)
-        CC_EDF_period.append(display_period.value)
-        display_wc_exec_time.value = 0
-        display_invocation.value = 0
-        display_period.value = 0
-
-        print(f'Periods (CC EDF): {CC_EDF_period}')  
-        print(f'W.C Ex. times (CC EDF): {CC_EDF_wc_exec_time}')
-        print(f'Invocations (CC EDF): {CC_EDF_invocation}')
-
     elif button_dropdown_algo.value == 'RM':
         RM_period.append(display_period.value)
         RM_exec_time.append(display_exec_time.value)
+        RM_end_time.append(display_end_time.value)
         display_period.value = 0
         display_exec_time.value = 0
+        display_end_time.value = 0
 
         print(f'Periods (RM): {RM_period}')  
         print(f'W.C Ex. times (RM): {RM_exec_time}')
+        print(f'End Time (RM): {RM_end_time}')  
+
+    elif button_dropdown_algo.value == 'CC EDF':
+        CC_EDF_period.append(display_period.value)
+        display_period.value = 0
+        print(f'Periods (CC EDF): {CC_EDF_period}')  
+    
+        CC_EDF_wc_exec_time.append(display_wc_exec_time.value)
+        display_wc_exec_time.value = 0
+        print(f'W.C Ex. times (CC EDF): {CC_EDF_wc_exec_time}')
+
+        invocation_1_val = 0
+        invocation_2_val = 0
+        invocation_3_val = 0
+        
+        if button_dropdown_invocation.value == '1':
+            invocation_1_val = display_invocation1.value
+        elif button_dropdown_invocation.value == '2':
+            invocation_1_val = display_invocation1.value
+            invocation_2_val = display_invocation2.value
+        elif button_dropdown_invocation.value == '3':
+            invocation_1_val = display_invocation1.value
+            invocation_2_val = display_invocation2.value
+            invocation_3_val = display_invocation3.value
+
+        CC_EDF_invocation1.append(invocation_1_val)
+        display_invocation1.value = 0
+        CC_EDF_invocation2.append(invocation_2_val)
+        display_invocation2.value = 0
+        CC_EDF_invocation3.append(invocation_3_val)
+        display_invocation3.value = 0
+        
+        print(f'Invocation 1 (CC EDF): {CC_EDF_invocation1}')
+        print(f'Invocation 2 (CC EDF): {CC_EDF_invocation2}')
+        print(f'Invocation 3 (CC EDF): {CC_EDF_invocation3}')
+
+    
     
     count_task += 1
     label_task_count.text = f"""<u>Task {count_task}:</u>"""
@@ -784,7 +822,6 @@ def clear_tasks():
     elif button_dropdown_algo.value == 'CC EDF':
 
         CC_EDF_wc_exec_time.clear()
-        CC_EDF_invocation.clear()
         CC_EDF_period.clear()
     
     elif button_dropdown_algo.value == 'RM':
