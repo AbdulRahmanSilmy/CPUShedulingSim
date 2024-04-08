@@ -805,11 +805,15 @@ def show_schedulability(dict_info):
 
     elif schedulability_string == 'maybe':
 
+        print(f'Dict Info: {dict_info}')
+        
         label_schedulability_test.text = f"""<b><u>Schedulable:</u></b> {schedulability_string} <br> 
-                                            <b><u>Missed Task Deadline:</u></b> {dict_info['missed_task_num']} <br>
-                                            <b><u>Time Of Deadline Miss:</u></b> {dict_info['miss_occurance']}"""
+                                            <b><u>Missed Task Deadline:</u></b> {dict_info["missed_task_num"]} <br>
+                                            <b><u>Time Of Deadline Miss:</u></b> {dict_info["miss_occurance"]}"""
 
     label_schedulability_test.visible = True
+
+    print('added schedulability')
 
 
 # shows the task history after configuration
