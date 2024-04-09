@@ -102,7 +102,7 @@ margin_label_invocation = (-200,-20,60,167)
 margin_label_period = (-300,-20,60,197)
 margin_label_exec_time = (-250,10,40,167)
 margin_label_end_time = (-265,10,40,110)
-margin_label_task_context = (20,0,0,320)
+margin_label_task_context = (20,0,0,120)
 margin_label_task_history = (20,0,0,20)
 margin_label_invocation1 = (-150,0,0,100)
 
@@ -654,6 +654,7 @@ def show_options(attr, old, new):
     button_run.visible = True
     
     label_task_history.text = ''
+    label_task_context.text = ''
 
     if (new == 'FCFS') and (old == 'RM'):
         print('Went to FCFS from RM')
@@ -1041,7 +1042,8 @@ def show_task_algo_context(dict_info):
     # for CC EDF, the context is for exceeding Fmax
     elif button_dropdown_algo.value == 'CC EDF':
         
-        label_task_context.text = f"""<b><u>Warning:</u> Sum of Utilisation > 1. Frequency Cannot Exceed Fmax (capped at 1)</b>"""
+        label_task_context.text = f"""<b><u>Warning:</u> Sum of Utilisation > 1. <br> 
+                                    Frequency Cannot Exceed Fmax (capped at 1)</b>"""
 
     label_task_context.visible = True
 
