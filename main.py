@@ -52,6 +52,8 @@ button_warning_pressed = threading.Event()
 shutdown_confirmed = threading.Event()
 
 t_master_warning_RM_config = threading.Event()
+t_master_warning_RM_config_zero = threading.Event()
+t_master_warning_FCFS_no_time = threading.Event()
 
 t_shutdown_pause = threading.Event()
 
@@ -71,7 +73,11 @@ RM_period: list[int] = list()
 # front-end list for EDF release times
 CC_EDF_wc_exec_time: list[int] = list()
 CC_EDF_period: list[int] = list()
-CC_EDF_invocation: list[int] = list()
+CC_EDF_invocation1: list[int] = list()
+CC_EDF_invocation2: list[int] = list()
+CC_EDF_invocation3: list[int] = list()
+
+
 
 # a count for which task the user is configuring
 count_task: int = 1
@@ -85,9 +91,7 @@ count_task: int = 1
 # syntax: (top, right, bottom, left)
 
 margin_label_dropdown = (200,0,10,90)
-
 margin_button_dropdown_algo = (195,0,40,15)
-
 margin_figure_results = (-100,0,0,900)
 
 # For FCFS
@@ -98,8 +102,9 @@ margin_label_invocation = (-200,-20,60,167)
 margin_label_period = (-300,-20,60,197)
 margin_label_exec_time = (-250,10,40,167)
 margin_label_end_time = (-265,10,40,110)
-margin_label_schedulability_test = (50,0,0,320)
-margin_label_task_history = (0,0,0,20)
+margin_label_task_context = (20,0,0,320)
+margin_label_task_history = (20,0,0,20)
+margin_label_invocation1 = (-150,0,0,100)
 
 margin_display_release_time = (-301,0,0,0)
 margin_display_period = (-301,0,0,-36)
@@ -108,10 +113,10 @@ margin_display_invocation = (-201,0,0,-97)
 margin_display_exec_time = (-251,0,0,-127)
 margin_display_end_time = (-270,0,0,-127)
 
-margin_button_add_task = (-100,0,0,100)
-margin_button_clear_tasks = (-100,0,0,130)
+margin_button_add_task = (-80,0,0,100)
+margin_button_clear_tasks = (-80,0,0,130)
 margin_button_run = (75,0,0,650)
-margin_button_show_shutdown = (-100,0,0,150)
+margin_button_show_shutdown = (-80,0,0,150)
 margin_button_shutdown_no = (-260,0,0,-300)
 margin_button_shutdown_yes = (-260,0,0,100)
 margin_button_warning = (-220,0,0,-220)
@@ -121,6 +126,15 @@ margin_popup_shutdown = (-290,0,0,200)
 
 margin_background_UI = (-440,0,0,20)
 margin_popup_warning = (-290,0,0,200)
+
+margin_label_num_invocations = (-200,-20,60,40)
+margin_button_dropdown_invocation = (-201,0,0,20)
+margin_display_invocation1 = (-150,0,0,-110)
+margin_display_invocation2 = (-150,0,0,-110)
+margin_display_invocation3 = (-150,0,0,-110)
+margin_label_invocation2 = (-150,0,0,300)
+margin_label_invocation3 = (-150,0,0,500)
+
 
 #-------------------------------------
     # Styles
@@ -270,15 +284,6 @@ label_wc_exec_time = Div(
     styles = style_labels,
 )
 
-label_invocation = Div(
-    text = "<b>Invocation:</b>",
-    width=215,
-    height=30,
-    visible = False,
-    margin = margin_label_invocation,
-    styles = style_labels,
-)
-
 label_exec_time = Div(
     text = "<b>Exec Time:</b>",
     width=215,
@@ -297,12 +302,12 @@ label_end_time = Div(
     styles = style_labels,
 )
 
-label_schedulability_test = Div(
+label_task_context = Div(
     text = "<b>Schedulable: </b>",
-    width=215,
+    width=400,
     height=30,
     visible = False,
-    margin = margin_label_schedulability_test,
+    margin = margin_label_task_context,
     styles = style_labels,
 )
 
@@ -318,6 +323,40 @@ label_task_history = Div(
     styles = style_labels,
 )
 
+label_num_invocations = Div(
+    text = "<b>Choose Number of Invocations:</b>",
+    width=245,
+    height=30,
+    margin = margin_label_num_invocations,
+    styles = style_labels,
+)
+
+label_invocation1 = Div(
+    text = "<b>Invocation 1:</b>",
+    width=215,
+    height=30,
+    visible = False,
+    margin = margin_label_invocation1,
+    styles = style_labels,
+)
+
+label_invocation2 = Div(
+    text = "<b>Invocation 2:</b>",
+    width=215,
+    height=30,
+    visible = False,
+    margin = margin_label_invocation2,
+    styles = style_labels,
+)
+
+label_invocation3 = Div(
+    text = "<b>Invocation 3:</b>",
+    width=215,
+    height=30,
+    visible = False,
+    margin = margin_label_invocation3,
+    styles = style_labels,
+)
 
 #-------------------------------------
     # Displays
@@ -392,6 +431,40 @@ display_end_time = NumericInput(
     margin = margin_display_end_time,
 )
 
+display_invocation1 = NumericInput(
+    mode = 'int',
+    value = 0,
+    low = 0,
+    width=65,
+    height = 25,
+    styles = style_displays,
+    visible = False,
+    margin = margin_display_invocation1,
+)
+
+display_invocation2 = NumericInput(
+    mode = 'int',
+    value = 0,
+    low = 0,
+    width=65,
+    height = 25,
+    styles = style_displays,
+    visible = False,
+    margin = margin_display_invocation2,
+)
+
+display_invocation3 = NumericInput(
+    mode = 'int',
+    value = 0,
+    low = 0,
+    width=65,
+    height = 25,
+    styles = style_displays,
+    visible = False,
+    margin = margin_display_invocation3,
+)
+
+
 #-------------------------------------
     # Miscellaneous U/I
 #-------------------------------------
@@ -404,13 +477,14 @@ figure_results = figure(
     #toolbar = _,
     #toolbar_location = _,
     title="Scheduling Results",
+    background_fill_color="#fafafa",
     styles = style_figure,
     margin = margin_figure_results,
 )
 
 background_UI = Div(
     width=760,
-    height=420,
+    height=480,
     visible = True,
     styles = style_background_UI,
     margin = margin_background_UI,
@@ -528,11 +602,45 @@ button_warning =  Button(
     styles = style_button_warning,
 )
 
+button_dropdown_invocation = Select(
+    width=90,
+    height = 25,
+    visible = True,
+    value = "",
+    options = ['1', '2', '3'],
+    margin = margin_button_dropdown_invocation,
+    styles = style_buttons,
+)
+
+
 #-------------------------------------
             # Button Callbacks   
 #-------------------------------------
 
 # these are the functions that will be tied to buttons (e.g "play", "reset", "shutdown", maybe "save" if we have time?)
+
+# to prepare default U/I options
+button_dropdown_algo.value = 'FCFS'
+label_task_count.visible = True
+label_release_time.visible = True
+label_wc_exec_time.visible = True
+label_period.visible = False
+label_exec_time.visible = False
+label_end_time.visible = False
+label_invocation1.visible = False
+label_invocation2.visible = False
+label_invocation3.visible = False
+label_num_invocations.visible = False
+display_release_time.visible = True
+display_wc_exec_time.visible = True
+display_period.visible = False
+display_invocation.visible = False
+display_exec_time.visible = False
+display_end_time.visible = False
+button_dropdown_invocation.visible = False
+button_add_task.visible = True
+button_clear_tasks.visible = True
+button_run.visible = True
 
 
 #TODO - clear any data that was collected from a previous algo options, to have a clean slate
@@ -552,12 +660,22 @@ def show_options(attr, old, new):
         RM_exec_time.clear()
         RM_period.clear()
         display_end_time.value = 0
+        display_period.value = 0
+        display_exec_time.value = 0
+
         
     elif (new == 'FCFS') and (old == 'CC EDF'):
         print('Went from CC EDF to FCFS')
         CC_EDF_wc_exec_time.clear()
         CC_EDF_period.clear()
-        CC_EDF_invocation.clear()
+        CC_EDF_invocation1.clear()
+        CC_EDF_invocation2.clear()
+        CC_EDF_invocation3.clear()
+        display_period.value = 0
+        display_wc_exec_time.value = 0
+        button_dropdown_invocation.value = ''
+        display_invocation1.value = 0
+
 
     if new == 'FCFS':
         
@@ -568,14 +686,19 @@ def show_options(attr, old, new):
         
         label_period.visible = False
         label_exec_time.visible = False
-        label_invocation.visible = False
         label_end_time.visible = False
-        label_schedulability_test.visible = False
+        label_task_context.visible = False
 
         display_period.visible = False  # Hide the period input field
         display_invocation.visible = False
         display_exec_time.visible = False
         display_end_time.visible = False
+        
+        label_num_invocations.visible = False
+        label_invocation1.visible = False
+        label_invocation2.visible = False
+        label_invocation3.visible = False
+        button_dropdown_invocation.visible = False
         
         label_release_time.visible = True
         label_wc_exec_time.visible = True
@@ -589,13 +712,22 @@ def show_options(attr, old, new):
         print('Went to RM from FCFS')
         FCFS_release_time.clear()
         FCFS_wc_exec_time.clear()
+        display_release_time.value = 0
+        display_wc_exec_time.value = 0
+
         
     elif (new == 'RM') and (old == 'CC EDF'):
         print('Went to RM from CC EDF')
         CC_EDF_wc_exec_time.clear()
         CC_EDF_period.clear()
-        CC_EDF_invocation.clear()
-        
+        CC_EDF_invocation1.clear()
+        CC_EDF_invocation2.clear()
+        CC_EDF_invocation3.clear()
+        display_period.value = 0
+        display_wc_exec_time.value = 0
+        button_dropdown_invocation.value = ''
+        display_invocation1.value = 0
+
     if new == 'RM':
 
         # TODO - add extra U/I and U/I behaviour for RM
@@ -604,11 +736,16 @@ def show_options(attr, old, new):
         
         label_release_time.visible = False
         label_wc_exec_time.visible = False
-        label_invocation.visible = False
         
         display_release_time.visible = False
         display_wc_exec_time.visible = False
         display_invocation.visible = False
+        
+        label_num_invocations.visible = False
+        label_invocation1.visible = False
+        label_invocation2.visible = False
+        label_invocation3.visible = False
+        button_dropdown_invocation.visible = False
         
         label_period.visible = True
         label_exec_time.visible = True
@@ -623,12 +760,17 @@ def show_options(attr, old, new):
         print('Went to RM from FCFS')
         FCFS_release_time.clear()
         FCFS_wc_exec_time.clear()
+        display_release_time.value = 0
+        display_wc_exec_time.value = 0
+
 
     elif (new == 'CC EDF') and (old == 'RM'):
         print('Went to RM from CC EDF')
         RM_exec_time.clear()
         RM_period.clear()
         display_end_time.value = 0
+        display_period.value = 0
+        display_exec_time.value = 0
         
     if new == 'CC EDF':
 
@@ -639,25 +781,59 @@ def show_options(attr, old, new):
         label_exec_time.visible = False
         label_release_time.visible = False
         label_end_time.visible = False
-        label_schedulability_test.visible = False
+        label_task_context.visible = False
 
         display_release_time.visible = False    # Hide the release time input 
         display_exec_time.visible = False
         display_end_time.visible = False
         
+        label_invocation1.visible = False
+        label_invocation2.visible = False
+        label_invocation3.visible = False
+        label_num_invocations.visible = True
+        
         label_period.visible = True
         label_wc_exec_time.visible = True
-        label_invocation.visible = True
+        label_num_invocations.visible = True
         
         display_period.visible = True
         display_wc_exec_time.visible = True
-        display_invocation.visible = True
+        display_invocation.visible = False
+        button_dropdown_invocation.visible = True
 
     
     count_task = 1
     label_task_count.text = f"""<u>Task {count_task}:</u>"""
 
 button_dropdown_algo.on_change("value", show_options)
+button_dropdown_invocation.on_change('value', show_options)
+
+
+def show_invocation_labels(attr, old, new):
+    # Determine which label_invocation element to display based on the selected value
+    if new == '1':
+        label_invocation1.visible = True
+        label_invocation2.visible = False
+        label_invocation3.visible = False
+        display_invocation1.visible = True
+        display_invocation2.visible = False
+        display_invocation3.visible = False
+    elif new == '2':
+        label_invocation1.visible = True
+        label_invocation2.visible = True
+        label_invocation3.visible = False
+        display_invocation1.visible = True
+        display_invocation2.visible = True
+        display_invocation3.visible = False
+    elif new == '3':
+        label_invocation1.visible = True
+        label_invocation2.visible = True
+        label_invocation3.visible = True
+        display_invocation1.visible = True
+        display_invocation2.visible = True
+        display_invocation3.visible = True
+
+button_dropdown_invocation.on_change('value', show_invocation_labels)
 
 
 def collect_task():
@@ -666,7 +842,13 @@ def collect_task():
 
     # the value of the dropdown button will dictate what task info to collect
     if button_dropdown_algo.value == 'FCFS':
-
+        
+        # invalid task configuration, period below exec time
+        if (display_wc_exec_time.value == 0):
+            
+            t_master_warning_FCFS_no_time.set()
+            return;
+            
         FCFS_release_time.append(display_release_time.value)
         FCFS_wc_exec_time.append(display_wc_exec_time.value)
         display_release_time.value = 0
@@ -677,16 +859,38 @@ def collect_task():
 
     elif button_dropdown_algo.value == 'CC EDF':
 
-        CC_EDF_wc_exec_time.append(display_wc_exec_time.value)
-        CC_EDF_invocation.append(display_invocation.value)
         CC_EDF_period.append(display_period.value)
-        display_wc_exec_time.value = 0
-        display_invocation.value = 0
         display_period.value = 0
-
         print(f'Periods (CC EDF): {CC_EDF_period}')  
+    
+        CC_EDF_wc_exec_time.append(display_wc_exec_time.value)
+        display_wc_exec_time.value = 0
         print(f'W.C Ex. times (CC EDF): {CC_EDF_wc_exec_time}')
-        print(f'Invocations (CC EDF): {CC_EDF_invocation}')
+
+        invocation_1_val = 0
+        invocation_2_val = 0
+        invocation_3_val = 0
+        
+        if button_dropdown_invocation.value == '1':
+            invocation_1_val = display_invocation1.value
+        elif button_dropdown_invocation.value == '2':
+            invocation_1_val = display_invocation1.value
+            invocation_2_val = display_invocation2.value
+        elif button_dropdown_invocation.value == '3':
+            invocation_1_val = display_invocation1.value
+            invocation_2_val = display_invocation2.value
+            invocation_3_val = display_invocation3.value
+
+        CC_EDF_invocation1.append(invocation_1_val)
+        display_invocation1.value = 0
+        CC_EDF_invocation2.append(invocation_2_val)
+        display_invocation2.value = 0
+        CC_EDF_invocation3.append(invocation_3_val)
+        display_invocation3.value = 0
+        
+        print(f'Invocation 1 (CC EDF): {CC_EDF_invocation1}')
+        print(f'Invocation 2 (CC EDF): {CC_EDF_invocation2}')
+        print(f'Invocation 3 (CC EDF): {CC_EDF_invocation3}')
 
     elif button_dropdown_algo.value == 'RM':
         
@@ -695,7 +899,13 @@ def collect_task():
             
             t_master_warning_RM_config.set()
             return;
+        
+        # invalid task configuration, value of 0 for either period or exec time
+        elif display_exec_time.value == 0 or display_period == 0:
             
+            t_master_warning_RM_config_zero.set()
+            return;
+        
         RM_period.append(display_period.value)
         RM_exec_time.append(display_exec_time.value)
         display_period.value = 0
@@ -723,12 +933,15 @@ def clear_tasks():
         
         FCFS_release_time.clear()
         FCFS_wc_exec_time.clear()
+        
 
     elif button_dropdown_algo.value == 'CC EDF':
 
         CC_EDF_wc_exec_time.clear()
-        CC_EDF_invocation.clear()
         CC_EDF_period.clear()
+        CC_EDF_invocation1.clear()
+        CC_EDF_invocation2.clear()
+        CC_EDF_invocation3.clear()
     
     elif button_dropdown_algo.value == 'RM':
         RM_period.clear()
@@ -784,36 +997,53 @@ def show_task_result(task_x_coord, task_width, frequency, label, task_count):
     # TODO - make it possible to use distinct colours for any number of tasks
     plot_colors=['blue','green','red','pink','orange','yellow', 'purple', 'grey']
     
-    figure_results.vbar(x = task_x_coord, width = task_width, top = frequency, fill_color = plot_colors[task_count], legend_label=f'Task {task_count+1}')
+    figure_results.vbar(x = task_x_coord, 
+                        width = task_width, 
+                        top = frequency, 
+                        fill_color = plot_colors[task_count], 
+                        legend_label=f'Task {task_count+1}', 
+                        alpha = 0.5)
+                        
     figure_results.y_range.start = 0
-    figure_results.xgrid.grid_line_color = None
+    figure_results.xgrid.grid_line_color = 'black'
+    figure_results.ygrid.grid_line_color = 'black'
     figure_results.xaxis.axis_label = "Time"
     figure_results.yaxis.axis_label = "Frequency"
     figure_results.outline_line_color = None
     print('done displaying')
 
 
-# show the schedulability info, for RM
-def show_schedulability(dict_info):
-
-    schedulability_string = dict_info["schedulability"]
-
-    # there won't be missed deadlines, just say yes
-    if schedulability_string == 'yes':
-
-        label_schedulability_test.text = f'<b>Schedulable:</b> {schedulability_string}'
-
-    elif schedulability_string == 'maybe':
-
-        print(f'Dict Info: {dict_info}')
+# show the schedulability info for RM, or when exceeding Fmax for CC EDF
+def show_task_algo_context(dict_info):
+    
+    # for RM, the context is for schedulability
+    if button_dropdown_algo.value == 'RM':
         
-        label_schedulability_test.text = f"""<b><u>Schedulable:</u></b> {schedulability_string} <br> 
-                                            <b><u>Missed Task Deadline:</u></b> {dict_info["missed_task_num"]} <br>
-                                            <b><u>Time Of Deadline Miss:</u></b> {dict_info["miss_occurance"]}"""
+        schedulability_string = dict_info['schedulability']
+        missed_task = dict_info['missed_task_num']
+        missed_deadline = dict_info['miss_occurance']
+        
+        # schedulability_string = dict_info.get("schedulability")
+        # missed_task = dict_info.get("missed_task_num")
+        # missed_deadline = dict_info.get("miss_occurance")
+        
+        # there won't be missed deadlines, just say yes
+        if schedulability_string == 'yes':
 
-    label_schedulability_test.visible = True
+            label_task_context.text = f'<b>Schedulable:</b> {schedulability_string}'
 
-    print('added schedulability')
+        elif schedulability_string == 'maybe':
+
+            label_task_context.text = f"""<b><u>Schedulable:</u></b> {schedulability_string} <br> 
+                                                <b><u>Missed Task Deadline:</u></b> {missed_task} <br>
+                                                <b><u>Time Of Deadline Miss:</u></b> {missed_deadline}"""
+    
+    # for CC EDF, the context is for exceeding Fmax
+    elif button_dropdown_algo.value == 'CC EDF':
+        
+        label_task_context.text = f"""<b><u>Warning:</u> Sum of Utilisation > 1. Frequency Cannot Exceed Fmax (capped at 1)</b>"""
+
+    label_task_context.visible = True
 
 
 # shows the task history after configuration
@@ -884,7 +1114,7 @@ def show_shutdown_ui(show_popup, confirm_string):
         
         elif confirm_string == "warning_RM_end":
             
-            popup_warning.text = """Error: Invalid Task Configuration.<br> End Time Is 0"""
+            popup_warning.text = """Error: Invalid Task Configuration.<br> End Time is 0"""
             popup_warning.visible = True
             button_warning.visible = True
             return;
@@ -895,13 +1125,26 @@ def show_shutdown_ui(show_popup, confirm_string):
             popup_warning.visible = True
             button_warning.visible = True
             return;
-    
-        if confirm_string == "end":
+        
+        elif confirm_string == "warning_FCFS_no_time":
+            
+            popup_warning.text = """Error: Invalid Task Configuration.<br> Execution Time is 0"""
+            popup_warning.visible = True
+            button_warning.visible = True
+            return;
+            
+        elif confirm_string == "warning_RM_zero":
+            
+            popup_warning.text = """Error: Invalid Task Configuration.<br> Period or Execution Time is 0"""
+            popup_warning.visible = True
+            button_warning.visible = True
+            return;
+        
+        elif confirm_string == "end":
             
             popup_shutdown.text = """ <b>Simulator has stopped</b> """
             button_shutdown_no.visible = False
             button_shutdown_yes.visible = False
-        
         
     else:
 
@@ -924,7 +1167,7 @@ def shutdown():
 # the master thread will be the thread that contains the dynamics of the simulator
 # inside it is where we'll have calls to the scheduling functions that have been made (and possibly other functions)
 # server callbacks will cause U/I changes on the fly
-def master_thread(button_run_pressed, t_master_warning_RM_config, button_warning_pressed, t_shutdown_pause):
+def master_thread(button_run_pressed, t_master_warning_RM_config, t_master_warning_RM_config_zero, t_master_warning_FCFS_no_time, button_warning_pressed, t_shutdown_pause):
 
     # main_thread is the one thread that all the code lives within
     # bokeh servers will need independent threads to run properly, and opens the avenue for user-friendliness
@@ -945,6 +1188,8 @@ def master_thread(button_run_pressed, t_master_warning_RM_config, button_warning
             
             elif button_dropdown_algo.value == 'RM':
                 
+                # edge case of end time not given for a run
+                
                 if display_end_time.value == 0:
                     
                     t_shutdown_pause.set()
@@ -963,7 +1208,45 @@ def master_thread(button_run_pressed, t_master_warning_RM_config, button_warning
                                 'wc_exec_time':np.array(RM_exec_time),
                                 'end_time':display_end_time.value
                             }
+            
+            elif button_dropdown_algo.value == 'CC EDF':
                 
+                # passing the right number of invocations
+                # CORE ASSUMPTION THAT THE NUMBER OF INVOCS DON'T CHANGE MID-CONFIG
+                
+                if button_dropdown_invocation.value == '1':
+                
+                    task_info = {   "scheduling_algo":'CycleEDF',
+                                    "periods": np.array(CC_EDF_period),
+                                    "wc_exec_time": np.array(CC_EDF_wc_exec_time),
+                                    "invocations":[ 
+                                                    CC_EDF_invocation1,
+                                                  ]
+                                }
+                                
+                elif button_dropdown_invocation.value == '2':
+                
+                    task_info = {   "scheduling_algo":'CycleEDF',
+                                    "periods": np.array(CC_EDF_period),
+                                    "wc_exec_time": np.array(CC_EDF_wc_exec_time),
+                                    "invocations":[ 
+                                                    CC_EDF_invocation1,
+                                                    CC_EDF_invocation2
+                                                  ]
+                                }         
+                                
+                elif button_dropdown_invocation.value == '3':
+                
+                    task_info = {   "scheduling_algo":'CycleEDF',
+                                    "periods": np.array(CC_EDF_period),
+                                    "wc_exec_time": np.array(CC_EDF_wc_exec_time),
+                                    "invocations":[ 
+                                                    CC_EDF_invocation1,
+                                                    CC_EDF_invocation2,
+                                                    CC_EDF_invocation3
+                                                  ]
+                                }
+            
             # if the user has not configured any tasks, Run does nothing and gives a warning
             if (button_dropdown_algo.value == 'FCFS' and len(FCFS_release_time) == 0) or (button_dropdown_algo.value == 'RM' and len(RM_period) == 0) or (button_dropdown_algo.value == 'CC EDF' and len(CC_EDF_wc_exec_time) == 0):
                 
@@ -978,17 +1261,31 @@ def master_thread(button_run_pressed, t_master_warning_RM_config, button_warning
                 t_shutdown_pause.clear()
                 button_run_pressed.clear()
                 continue;
-                
-            results, dict_info = cpu_scheduling_compute(task_info)
+            
+            print(f'/n Task_info: {task_info}')
 
+            results, dict_info = cpu_scheduling_compute(task_info)
+            
+            print(dict_info)
+            
             # after a valid task configuration, show the task history
             app_doc.add_next_tick_callback(partial(show_task_history))
 
             # getting schedulability for RM
             if button_dropdown_algo.value == 'RM':
-
-                app_doc.add_next_tick_callback(partial(show_schedulability, dict_info))
-
+                
+                print ("Showing RM contex")
+                app_doc.add_next_tick_callback(partial(show_task_algo_context, dict_info))
+            
+            elif button_dropdown_algo.value == 'CC EDF':
+                
+                
+                # only one warning for this version of the simulator, which is for exceeding fmax
+                # if this is built upon in future, this will need work
+                if dict_info:
+                    
+                    app_doc.add_next_tick_callback(partial(show_task_algo_context, dict_info))
+                    
             # the callback will repeatedly add bars for each task
             for row in results:
 
@@ -1010,9 +1307,28 @@ def master_thread(button_run_pressed, t_master_warning_RM_config, button_warning
             t_master_warning_RM_config.clear()
             
             t_shutdown_pause.set()
+        
+        # warning for the FCFS having an execution time of 0
+        elif t_master_warning_FCFS_no_time.wait(0.005) and not button_warning_pressed.wait(0.005):
             
-        # if the warning is to be cleared, clear the U/I
-        elif button_warning_pressed.wait(0.01) and not t_master_warning_RM_config.is_set():
+            app_doc.add_next_tick_callback(partial(show_shutdown_ui, 1, "warning_FCFS_no_time"))
+            t_master_warning_FCFS_no_time.clear()
+            
+            t_shutdown_pause.set()
+        
+        # warning for either of the RM times being zero
+        elif t_master_warning_RM_config_zero.wait(0.005) and not button_warning_pressed.wait(0.005):
+            
+            app_doc.add_next_tick_callback(partial(show_shutdown_ui, 1, "warning_RM_zero"))
+            t_master_warning_RM_config_zero.clear()
+            
+            t_shutdown_pause.set()
+        
+        # if the warnings from either FCFS or RM are to be cleared, clear the U/I
+        elif(   (button_warning_pressed.wait(0.01) and not t_master_warning_RM_config.is_set()) or 
+                (button_warning_pressed.wait(0.01) and not t_master_warning_FCFS_no_time.is_set()) or 
+                (button_warning_pressed.wait(0.01) and not t_master_warning_RM_config_zero.is_set())
+            ):
             
             app_doc.add_next_tick_callback(partial(hide_warning_UI))
             
@@ -1067,12 +1383,15 @@ my_layout = layout (  [
                         [label_exec_time, display_exec_time, label_end_time, display_end_time],
                         [label_release_time, display_release_time],
                         [label_wc_exec_time, display_wc_exec_time],
-                        [label_invocation, display_invocation],
+                        [label_num_invocations, button_dropdown_invocation],
+                        [label_invocation1, display_invocation1],
+                        [label_invocation2, display_invocation2],
+                        [label_invocation3, display_invocation3],
                         [button_add_task, button_clear_tasks, button_show_shutdown],
                         [popup_shutdown, button_shutdown_no, button_shutdown_yes],
                         [popup_warning, button_warning],
-                        [background_UI, ],
-                        [label_task_history, label_schedulability_test]
+                        [background_UI,],
+                        [label_task_history, label_task_context]
                       ]
                    )
 
@@ -1086,7 +1405,13 @@ app_doc.add_root(my_layout)
 # may or may not need to set some thread events here
 
 # preparing the threads, passing over relevant thread arguments
-t1 = threading.Thread( target = master_thread, args = (button_run_pressed, t_master_warning_RM_config, button_warning_pressed, t_shutdown_pause) )
+t1 = threading.Thread( target = master_thread, args = (button_run_pressed, 
+                                                       t_master_warning_RM_config, 
+                                                       t_master_warning_RM_config_zero, 
+                                                       t_master_warning_FCFS_no_time, 
+                                                       button_warning_pressed, 
+                                                       t_shutdown_pause) 
+                    )
 t2 = threading.Thread( target = shutdown_thread, args = (button_shutdown_pressed, shutdown_confirmed, t_shutdown_pause))
 
 t2.start()
